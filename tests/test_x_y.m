@@ -5,7 +5,7 @@ addpath('src');
 
 d = 22.5; % distance between two cells
 gamma = 10; % km per decade
-diff_speed = gamma / d / 10; % diffusion speed in cells per year
+diff_speed = gamma / d ; % diffusion speed in cells per year
 
 % load build
 load('data/prep/geography.mat');
@@ -38,7 +38,7 @@ lonp = lon(lonidx);
 
 %% define simulation array
 
-dt = 50; % time step in years
+dt = 10; % time step in years
 start_time = floor(min(pinhasi.bp)/dt)*dt;
 end_time = ceil(max(pinhasi.bp)/dt)*dt;
 T = round((end_time - start_time)/dt + 1);
@@ -63,32 +63,50 @@ A = false(length(latp), length(lonp), T);
 A(pinhasi_active(earliest_event,1), pinhasi_active(earliest_event,2), 1) = true;
 
 % define c_x and c_y
-c_x = 100;
-c_y = 1;
-ratios = [100,10,1,0.1,0.01,0.001];
+ratios = [0.1 1 10];
+labels = {"c_x/c_y = 1", "c_x/c_y = 10", "c_x/c_y = 100"};
+colors = {"#EDB120", "#77AC30", "#4DBEEE"};
+factors = linspace(0.1,4.1,6);
 
-for ratio = 1:length(ratios)
-    c_x  = 1;
-    c_y = ratios(ratio)*c_x;
-    A = run_model(100, A, T, diff_speed, c_x, c_y, dt);
-    
-    error = calculate_error(A, pinhasi_active);
-    disp(error)
-    % make figure
+terrain = csidata(latidx, lonidx);
+terrain = terrain./max(max(terrain));
 
-    pinhasimtx = zeros(length(latp),length(lonp));
-    [~, index_x] = min(abs(latp - pinhasi.lat(idx)));
-    [~, index_y] = min(abs(lonp - pinhasi.lon(idx)));
-    pinhasimtx(index_x,index_y) = 1; 
 
-    land = shaperead('landareas.shp', 'UseGeoCoords', true);
+function error = optimize_model(theta, A, T, terrain, pinhasi_active)
+    % Call run_model with the given theta
+    [~, error] = run_model(1, A, T, theta, terrain, pinhasi_active);
+end
 
-    R = georefcells([latp(1) latp(end)], [lonp(1) lonp(end)], ...
-        size(pinhasimtx));
+% theta(1) - average diffusion speed (b0)
+% theta(2) - ratio between EW direction and NS direction (r)
+% theta(3) - contribution of terrain (b1)
 
-    loc = 10;
-    fwidth = 20;
-    % set up figure with extent of Europe/Iran
+objective_function = @(theta) optimize_model(theta, A, T, terrain, pinhasi_active);
+
+theta0 = [0.25 2 0.1];
+
+options = optimset('MaxFunEvals', 1000, 'MaxIter', 10000, 'Display', 'iter');
+theta = fminsearch(objective_function, theta0);
+
+[A,error] = run_model(1, A, T, theta, terrain, pinhasi_active);
+
+disp(error)
+
+% make figure
+pinhasimtx = zeros(length(latp),length(lonp));
+[~, index_x] = min(abs(latp - pinhasi.lat(idx)));
+[~, index_y] = min(abs(lonp - pinhasi.lon(idx)));
+pinhasimtx(index_x,index_y) = 1; 
+
+land = shaperead('landareas.shp', 'UseGeoCoords', true);
+
+R = georefcells([latp(1) latp(end)], [lonp(1) lonp(end)], ...
+    size(pinhasimtx));
+
+loc = 10;
+fwidth = 20;
+% set up figure with extent of Europe/Iran
+if true
     f = figure('Units','inches','Position',[loc loc fwidth fwidth/2.2], ...
     'PaperPosition',[.25 .25 8 6]);
     hold on;
@@ -100,10 +118,11 @@ for ratio = 1:length(ratios)
     geoshow(sum(A,3), R, 'DisplayType', 'texturemap')
     %make sea white
     geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
-        'Polygon', 'FaceColor', 'white')
+        'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
 
     framem('FLineWidth', 1, 'FontSize', 7)
 
     % add pinhasi sites and set the color to reflect bp
-    scatterm(pinhasi.lat, pinhasi.lon, 10, 'r', 'filled')
+    scatterm(pinhasi.lat, pinhasi.lon, 1, 'r', 'filled')
 end
+
