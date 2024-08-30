@@ -2,7 +2,7 @@ function error = calculate_error(A, data)
     error = 0.0;
     [r,~] = size(data);
 
-    for event_index = 1:length(data)
+    for event_index = 1:r
         if r == 1
             t_pinhasi = data(3);
             simulation_timeseries = A(data(1), data(2), :);

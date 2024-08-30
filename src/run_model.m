@@ -1,14 +1,23 @@
-
-function [A_av,error_av] = run_model(n, A_start, nt, theta, X, data)
+function [A_av, error_av] = run_model(n, A_start, nt, theta, X, data)
+    % Initialize the accumulators
     A_av = zeros(size(A_start));
-    error_av = 0;
-    for rep = 1:n
+    error_sum = 0;
+
+    parfor rep = 1:n
+        % Run the model for each instance
         A = run_model_av(A_start, nt, theta, X);
         error = calculate_error(A, data);
-        A_av = A_av + A/n;
-        error_av = error + error/n;
+        
+        % Accumulate the results
+        error_sum = error_sum + error;
+        A_av = A_av + double(A);  % Convert to double to accumulate
     end
+
+    % Finalize the average
+    error_av = error_sum / n;
+    A_av = A_av / n;
 end
+
 
 function A = run_model_av(A_start, nt, theta, X)
     A = A_start;
@@ -19,15 +28,16 @@ function A = run_model_av(A_start, nt, theta, X)
 end
 
 function a = step(a, theta, X)
+    a = sparse(a);
     %normalize c_x and c_y
     [Fn,Fs,Fw,Fe] = frontier(a); % find adjacent cells to currently activated ones
     F = Fn | Fs | Fw | Fe;
-    % theta(1) - average diffusion speed (b0)
-    % theta(2) - ratio between EW direction and NS direction (r)
+    % theta(1) - average diffusion speed N-S
+    % theta(2) - average diffusion speed E-W
     % theta(3) - contribution of terrain (b1)
-    cx = theta(2)/(1+theta(2));
-    cy = 1/(1+theta(2));
-    M = abs(theta(1)) .* (cx * (Fe+Fw)/2 + cy * (Fn+Fs)/2) + theta(3) * F .* X;
+
+    M = theta(1) * (Fn+Fs)/2 + theta(2) * (Fe+Fw)/2 + theta(3) * F .* X;
+    % M = abs(theta(1)) .* (cx * (Fe+Fw)/2 + cy * (Fn+Fs)/2) + theta(3) * F .* X;
     f = find(M); % indices of frontier cells
     
     adopt = rand(length(f),1) <= M(f); % which frontier cells adopt
