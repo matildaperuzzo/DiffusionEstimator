@@ -2,7 +2,7 @@ function parameters = data_prep()
 
     parameters = struct();
     % load build
-    load('data/prep/geography.mat', 'lat', 'lon', 'latmtx', 'lonmtx', 'csidata');
+    load('data/prep/geography.mat', 'lat', 'lon', 'csidata');
     
     
     % load pinhasi
@@ -17,9 +17,9 @@ function parameters = data_prep()
     pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
     pinhasi.bp = 2000 - pinhasi.bp; % from BP to year
 
-    parameters.pinhasi_lat = pinhasi.lat;
-    parameters.pinhasi_lon = pinhasi.lon;
-    parameters.pinhasi_bp = pinhasi.bp;
+    parameters.dataset_lat = pinhasi.lat;
+    parameters.dataset_lon = pinhasi.lon;
+    parameters.dataset_bp = pinhasi.bp;
 
     % restrict to Europe/Iran range
     topleft = [60, -17.19];
@@ -27,10 +27,8 @@ function parameters = data_prep()
 
     % skip every other element of longitude and latitude
     skip = 2;
-    lat = lat(1, 1:skip:end);
+    lat = lat(1,1:skip:end);
     lon = lon(1,1:skip:end);
-    latmtx = latmtx(1:skip:end,1:skip:end);
-    lonmtx = lonmtx(1:skip:end,1:skip:end);
     csidata = csidata(1:skip:end,1:skip:end);
 
     latidx = lat <= topleft(1) & lat >= bottomright(1);
@@ -52,7 +50,7 @@ function parameters = data_prep()
     parameters.times = parameters.start_time:parameters.dt:parameters.end_time;
 
     % create matrix storing x,y,t indices coordinates of pinhasi sites
-    parameters.pinhasi_dataset = zeros(length(pinhasi.lat),3);
+    parameters.dataset_idx = zeros(length(pinhasi.lat),3);
     for event_index = 1:length(pinhasi.lat)
         lat_event = pinhasi.lat(event_index);
         lon_event = pinhasi.lon(event_index);
@@ -60,7 +58,7 @@ function parameters = data_prep()
         [~, index_y] = min(abs(lonp - lon_event));
  
         [~, index_t] = min(abs(parameters.times - pinhasi.bp(event_index)));
-        parameters.pinhasi_dataset(event_index,:) = [index_x, index_y, index_t];
+        parameters.dataset_idx(event_index,:) = [index_x, index_y, index_t];
     end
 
     % add terrain data
@@ -69,6 +67,6 @@ function parameters = data_prep()
 
     % initialize A
     parameters.A = false(length(latp), length(lonp), parameters.T);
-    [~, earliest_event] = min(parameters.pinhasi_dataset(:,3));
-    parameters.A(parameters.pinhasi_dataset(earliest_event,1), parameters.pinhasi_dataset(earliest_event,2), 1) = true;
+    [~, earliest_event] = min(parameters.dataset_idx(:,3));
+    parameters.A(parameters.dataset_idx(earliest_event,1), parameters.dataset_idx(earliest_event,2), 1) = true;
 end
