@@ -8,7 +8,8 @@ addpath('src');
 rng(12) % set random seed
 
 % choose whether to load pinhasi dataset or create a dataset
-parameters = data_prep(20);
+active_layers = [1 0 1 0 1];
+parameters = data_prep(20, active_layers);
 % theory_theta = [0.15 0.05 0.1];
 % parameters = create_dataset(theory_theta, 20, [53.0627, 43.6865]);
 % data_prep creates parameters struct with the following fields:
@@ -31,23 +32,27 @@ parameters = data_prep(20);
 % theta(1) - average diffusion speed E-W
 % theta(2) - average diffusion speed N-S
 % theta(3) - contribution of terrain (b1)
-
-theta_0 = linspace(0.0,1,51);
-theta_1 = [0];%linspace(-0.05,0.05,11);
-theta_2 = linspace(0.0,1.5,50);
+objective_function = @(theta) run_model(parameters, theta).squared_error;
+theta_0 = linspace(-1.,1.,21);
+theta_1 = linspace(-1.,1.,21);
+theta_2 = [0];
 all_errors = zeros(length(theta_0),length(theta_1),length(theta_2));
+all_gradients = zeros(length(theta_0),length(theta_1),length(theta_2),3);
 flag_1 = zeros(length(theta_0),length(theta_1),length(theta_2));
 flag_2 = zeros(length(theta_0),length(theta_1),length(theta_2));
 for t = 1:length(theta_2)
     for y = 1:length(theta_1)
         for x = 1:length(theta_0)
-            theta = [theta_0(x), theta_1(y), theta_2(t)];
+            theta = [theta_0(x); theta_1(y); theta_2(t)];
             tic
             result = run_model(parameters, theta);
-            disp(toc)
-            all_errors(x,y,t) = result.squared_error*parameters.dt;
+            
+            % disp(toc)
+            all_errors(x,y,t) = result.squared_error;
+            grads = calculateGradient(objective_function, theta, 0.1);
+            all_gradients(x,y,t,:) = grads;
             flag_1(x,y,t) = result.exitflag_1;
-            flag_2(x,y,t) = result.exitflag_2;
+            flag_2(x,y,t) = result.exitflag_2; 
             disp(theta);
             disp(all_errors(x,y,t));
 
@@ -55,5 +60,5 @@ for t = 1:length(theta_2)
     end
 end
 
-save("pinhasi_dataset_theta_0_2.mat","all_errors","theta_0","theta_1","theta_2","flag_1","flag_2",'-mat')
+save("pinhasi_dataset_theta_0_2.mat","all_errors","all_gradients","theta_0","theta_1","theta_2","flag_1","flag_2",'-mat')
 disp("Done!")

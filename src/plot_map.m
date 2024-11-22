@@ -4,7 +4,7 @@ function plot_map(parameters,errors)
     land = shaperead('landareas.shp', 'UseGeoCoords', true);
 
     R = georefcells(parameters.lat, parameters.lon, ...
-        size(parameters.terrain));
+        size(parameters.X{1}));
     loc = 10;
     fwidth = 20;
     tic
@@ -41,7 +41,7 @@ function plot_map(parameters,errors)
     % Loop over each point and plot with the corresponding color
     scatterm(parameters.dataset_lat, parameters.dataset_lon, 10, errors, 'filled');
     cb = colorbar;
-    ylabel(cb,'speed','FontSize',16);
+    ylabel(cb,'t_{data} - t_{sim}','FontSize',16);
     max_abs_value = max(abs(errors(:)));
     clim([-max_abs_value, max_abs_value]);
 

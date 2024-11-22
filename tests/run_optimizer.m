@@ -3,14 +3,18 @@ clc
 
 plot_landscape = true;
 
-factor = .01;
-
+factor = .10;
+load("pinhasi_dataset_theta_0_2_detail.mat")
+error_slice = all_errors(:,1,:);
+[min_error, min_error_idx] = min(error_slice(:));
+[idx_0, idx_2] = ind2sub(size(error_slice), min_error_idx);
 
 function error = optimize_model(theta, parameters)
-    factor = .01;
+    factor = .10;
+    theta = [theta(1) 0.0 theta(2)];
     theta = theta/factor;
     % Call run_model with the given theta
-    theta = [theta(1) 10^(theta(2))*theta(1) 0.0];
+ 
     result = run_model(parameters, theta);
     error = result.squared_error;
 end
@@ -70,7 +74,7 @@ if true
     objective_function = @(theta) optimize_model(theta,parameters);
 
     % initial guess
-    theta0 = [0.2 -0.0]*factor;
+    theta0 = [0.3,0.6]*factor;
 
     options = optimoptions('fminunc', ...
         'Display', 'iter', ...
@@ -92,7 +96,7 @@ if true
     disp("Elapsed time: " + toc + " seconds");
 
     theta = theta/factor;
-    theta = [theta(1) theta(1)*10^(theta(2)) 0.0]/factor;
+    theta = [theta(1) 0.0 theta(2)]/factor;
 
     
     result = run_model(parameters,theta);
@@ -119,13 +123,10 @@ if true
     % fprintf('Elapsed time: %.2f seconds\n', toc);
 
     if plot_landscape
-        load("all_errors_pinhasi_sweep.mat")
-        dt = 20;
-        error_slice = all_errors(:,:,1);
-        [min_error, min_error_idx] = min(error_slice(:));
-        [av_idx, r_idx] = ind2sub(size(error_slice), min_error_idx);
         
-        [X,Y] = meshgrid(av_theta,log10(r_theta));
+        dt = 20;
+        
+        [X,Y] = meshgrid(theta_0,theta_2);
         
         % Define the three colors (RGB format):
         color1 = [23/255, 42/255, 80/255];   % Blue
@@ -140,18 +141,19 @@ if true
         colormap(parula)
         
         figure(1)
-        p = contourf(X,Y,squeeze(all_errors(:,:,1))');
+        p = contourf(X,Y,squeeze(all_errors(:,1,:))');
         % set(p, 'CData',squeeze(all_errors(:,:,1))');
         colorbar;
-        ylabel("log(ratio)")
-        xlabel("average diffusion speed")
+        ylabel("theta_0")
+        xlabel("theta_2")
         % plot point with lowest error in red
         hold on
-        plot(av_theta(av_idx), log10(r_theta(r_idx)), 'r*', 'MarkerSize',10)
+        plot(theta_0(idx_0), theta_2(idx_2), 'r*', 'MarkerSize',10)
         plot(paramsHistory(:,1)/factor,paramsHistory(:,2)/factor,'ro')
         plot(paramsHistory(:,1)/factor,paramsHistory(:,2)/factor,'r')
-        % add text box with error value next to point with white background
-        % annotation('textbox', [0.42 0.46 0.1 0.1], 'String', sprintf('error^{1/2} = %f', sqrt(min_error)), 'EdgeColor', 'none', 'BackgroundColor', 'white', 'HorizontalAlignment', 'center', 'FontSize', 14);
+        
+        % plot(ones(size(paramsHistory))*theta_0(idx_0),paramsHistory/factor,'ro')
+        % plot(ones(size(paramsHistory))*theta_0(idx_0),paramsHistory/factor,'r') 
         max_abs_value = 50;
 
     end

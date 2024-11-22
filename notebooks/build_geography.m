@@ -27,6 +27,8 @@ clearvars -except delta
 
 disp('Build geography data ...')
 
+filename = 'data/prep/geography_0p5deg.mat';
+
 %% Prepare Template Raster
 
 disp('Prepare template grid')
@@ -39,7 +41,7 @@ lon = -180+delta/2:delta:180-delta/2;
 
 [lonmtx, latmtx] = meshgrid(lon, lat);
 
-save('data/prep/geography.mat');
+save(filename);
 
 
 %% Weights Grid
@@ -57,8 +59,8 @@ clear w
 
 disp('SAGE Potential Vegetation NetCDF Data')
 
-fn = '../OOS/data/original_data/SAGE/glpotveg/potveg_nc/vegtype_5min.nc';
-ncid = netcdf.open(fn, 'WRITE');
+fn = 'data/raw/SAGE/glpotveg/potveg_nc/vegtype_5min.nc';
+ncid = netcdf.open(fn);
 
 data = netcdf.getVar(ncid,4);
 data = data';
@@ -68,27 +70,43 @@ data(data > 100) = 0;
 % Actual delta of GAEZ data
 delta_act = 1/12;
 
-R = georefcells(lat,lon, size(data));
+% Compute latitude and longitude limits
+latlim = [min(lat), max(lat)];
+lonlim = [min(lon), max(lon)];
+
+% Use the limits in georefcells
+R = georefcells(latlim, lonlim, size(data));
 
 if delta ~= delta_act
     disp("Here");
-    [data, R] = georesize(data, R, [length(lat), length(lon)]);
+    skip = int16(delta/delta_act);
+
+    % data = data(1:skip:end, 1:skip:end);
+end
+
+pot_veg_data = {};
+if delta ~= delta_act
+    for i = 0:16
+        dat = data == i;
+        pot_veg_data{length(pot_veg_data)+1} = imresize(dat, [length(lat) length(lon)]);
+    end
 end
 
 potveg = struct(...
     'lat', lat, ...
     'lon', lon, ...
     'data', data, ...
+    'pot_veg_data', pot_veg_data, ...
     'source', 'SAGE Potential Vegetation NetCDF Data');
 
-save('data/prep/geography.mat', 'potveg', '-append')
+save(filename, 'potveg', '-append')
 
 
 %% SAGE Land Suitability Data
 
 disp('SAGE Suitability')
 
-fn = '../OOS/data/original_data/SAGE/land_suit/land_suit_0.50x0.50.nc';
+fn = 'data/raw/SAGE/land_suit/land_suit_0.50x0.50.nc';
 ncid = netcdf.open(fn, 'WRITE');
 
 data = netcdf.getVar(ncid,4);
@@ -101,7 +119,7 @@ data(data > 100) = 0;
 delta_act = 1/2;
 
 if delta ~= delta_act
-    data = resizem(data, [length(lat) length(lon)]);
+    data = imresize(data, [length(lat) length(lon)]);
 end
 
 landsuit = struct(...
@@ -112,7 +130,7 @@ landsuit = struct(...
 
 %imagesc(lon, lat, flipud(landsuit.data))
 
-save('data/prep/geography.mat', 'landsuit', '-append')
+save(filename, 'landsuit', '-append')
 
 
 %% HydroSHEDS ACC (River Flow Accumulation Data)
@@ -126,7 +144,7 @@ filenames = {'af_acc_30s_bil/af_acc_30s', ...
     'eu_acc_30s_bil/eu_acc_30s', ...
     'na_acc_30s_bil/na_acc_30s', ...
     'sa_acc_30s_bil/sa_acc_30s'};
-directory = '../OOS/data/original_data/HydroSHEDS/ACC/';
+directory = 'data/raw/HydroSHEDS/ACC/';
 
 acc = nan(length(lat),length(lon),length(filenames));
 
@@ -158,7 +176,7 @@ for f = 1:length(filenames)
     delta_act = 1/120;
 
     if delta ~= delta_act
-        data = resizem(data, delta_act/delta, 'bilinear', delta/delta_act);
+        data = imresize(data, delta_act/delta, 'bilinear', delta/delta_act);
     end
 
     datasize = size(data);
@@ -191,14 +209,14 @@ acc = struct(...
     'data', acc, ...
     'source', 'HydroSHEDS 30s ACC (Riverflow Accumulation)');
 
-save('data/prep/geography.mat', 'acc', '-append')
+save(filename', 'acc', '-append')
 
 
 %% Pre-1500 Caloric Suitability Index (Galor and Özak 2016)
 
 disp('Galor and Ozak CSI')
 
-fn = '../OOS/data/original_data/galorozak/pre1500OptCalories.tif';
+fn = 'data/raw/csi/pre1500OptCalories.tif';
 
 data = imread(fn);
 
@@ -210,14 +228,14 @@ csidata = nan(round(delta_rel*length(lat)), round(delta_rel*length(lon)));
 csidata(round(delta_rel*length(lat)-size(data,1)+1):end,:) = data;
 
 if delta ~= delta_act
-    csidata = resizem(csidata, [length(lat) length(lon)]);
+    csidata = imresize(csidata, [length(lat) length(lon)]);
 end
 
 csidata(csidata == -9) = 0;
 
 csidata = flipud(csidata);
 
-save('data/prep/geography.mat', 'csidata', '-append')
+save(filename, 'csidata', '-append')
 
 
 %% Slope and TRI (Nunn and Puga)

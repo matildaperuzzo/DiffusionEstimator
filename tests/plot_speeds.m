@@ -1,4 +1,5 @@
 addpath('src');
+
 function local_speeds = compute_local_speeds(x, y, t)
     % x, y, t are vectors representing the coordinates and time of each point
     % local_speeds will store the averaged local speeds for each point
@@ -32,17 +33,19 @@ function local_speeds = compute_local_speeds(x, y, t)
     end
 end
 
-parameters = data_prep(20);
+active_layers = [1 0 1 0 0];
+parameters = data_prep(20, active_layers);
 
 % theta_0 = 0.1449;
 % theta_1 = -0.04;
 % theta_2 = 0.24;
 
-theta_0 = 0.12;
-theta_1 = 0.0;
-theta_2 = 0.22;
+theta_0 = -0.9683;
+theta_1 = 0.5583;
 
-theta = [theta_0 theta_1 theta_2];
+
+theta = [theta_0 theta_1];
+
 
 result = run_model(parameters, theta);
 
@@ -54,6 +57,9 @@ lon = parameters.dataset_idx(:,2) - parameters.dataset_idx(min_idx,2);
 
 errors = calculate_error(parameters.dataset_idx, result.times, "full")*parameters.dt;
 plot_map(parameters, errors);
+
+
+%%
 figure(3)
 hold on;
 histogram(errors)
@@ -63,26 +69,22 @@ ylabel('Frequency')
 fprintf('Elapsed time: %.2f seconds\n', toc);
 
 distances = sqrt(lat.^2 +lon.^2);
-speeds = distances./times;
+speeds_data = distances./times;
 P = polyfit(times,distances,1);
 figure
 hold on;
+[distances, distances_ind] = sort(distances);
+times = times(distances_ind);
 plot(times, distances,'r.')
-plot(sort(times), P(2) + P(1)*sort(times),'r')
+plot(times, P(2) + P(1)*times,'r')
 xlabel('times/dt')
 ylabel('distances/dx')
-distances = sqrt(lat.^2 +lon.^2);
-speeds = distances./result.times;
+
+speeds_model = distances./result.times';
 P = polyfit(result.times,distances,1);
+result.times = result.times(distances_ind);
 plot(result.times, distances,'b.')
-plot(sort(result.times), P(2) + P(1)*sort(result.times),'b')
+plot(result.times, P(2) + P(1)*result.times,'b')
 xlabel('times/dt')
 ylabel('distances/dx')
 local_speeds = compute_local_speeds(parameters.dataset_idx(:,1),parameters.dataset_idx(:,2),parameters.dataset_idx(:,3));
-plot_map(parameters, local_speeds)
-figure
-histogram(local_speeds,100)
-xlabel('local speed')
-
-figure
-plot(times,result.times,'.')

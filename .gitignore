@@ -45,6 +45,7 @@ octave-workspace
 *.xls
 *.xlsx
 *.nc
+*.bil
 
 # ignore all images
 *.png

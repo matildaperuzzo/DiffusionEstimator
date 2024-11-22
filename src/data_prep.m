@@ -1,8 +1,8 @@
-function parameters = data_prep(n_averages)
+function parameters = data_prep(n_averages, active_layers)
 
     parameters = struct();
     % load build
-    load('data/prep/geography.mat', 'lat', 'lon', 'csidata');
+    load('data/prep/geography_0p5deg.mat');
     
     
     % load pinhasi
@@ -25,25 +25,19 @@ function parameters = data_prep(n_averages)
     topleft = [60, -17.19];
     bottomright = [15, 65.07];
 
-    % skip every other element of longitude and latitude
-    skip = 2;
-    lat = lat(1,1:skip:end);
-    lon = lon(1,1:skip:end);
-    csidata = csidata(1:skip:end,1:skip:end);
-
     latidx = lat <= topleft(1) & lat >= bottomright(1);
     lonidx = lon >= topleft(2) & lon <= bottomright(2);
 
     latp = lat(latidx);
     lonp = lon(lonidx);
-    csidata = csidata(latidx,lonidx);
     parameters.lat = [latp(1) latp(end)];
     parameters.lon = [lonp(1) lonp(end)];
 
+
     % define time array
-    parameters.dt = 20; % time step in years
+    parameters.dt = 40; % time step in years
     parameters.start_time = floor(min(pinhasi.bp)/parameters.dt)*parameters.dt;
-    parameters.end_time = ceil(max(pinhasi.bp)/parameters.dt)*parameters.dt + 1000; % add 1000 years to end_time
+    parameters.end_time = ceil(max(pinhasi.bp)/parameters.dt)*parameters.dt + 500; % add 1000 years to end_time
     parameters.T = round((parameters.end_time - parameters.start_time)/parameters.dt + 1);
 
     parameters.times = parameters.start_time:parameters.dt:parameters.end_time;
@@ -60,18 +54,46 @@ function parameters = data_prep(n_averages)
         parameters.dataset_idx(event_index,:) = [index_x, index_y, index_t];
     end
 
-    % add terrain data
-    parameters.terrain = csidata;
-    parameters.terrain = parameters.terrain/max(parameters.terrain(:));
-    parameters.terrain = parameters.terrain-mean(parameters.terrain(:))/std(parameters.terrain(:));
-    % parameters.terrain = parameters.terrain - 0.5;
+    % create the X vector
+    X = {};
+    if active_layers(3)
+        % add csi data
+        csidata = csidata(latidx,lonidx);
+        csi_mean = mean(csidata(:));
+        csi_std = std(csidata(:));
+        csidata = (csidata-csi_mean)./csi_std;
+        X{length(X)+1} = csidata;
+    end
+    if active_layers(4)
+        hydro = acc.data;
+        hydro = hydro(latidx,lonidx);
+        hydro(isnan(hydro)) = 0;
+        hydro_mean = mean(hydro(:));
+        hydro_std = std(hydro(:));
+        hydro = (hydro-hydro_mean)/hydro_std;
+        X{length(X)+1} = hydro;
+    end
+
+    if length(active_layers) > 4
+        for i = 5:length(active_layers)
+            if active_layers(i)
+                layer = potveg(i-4).pot_veg_data;
+                layer = layer(latidx,lonidx);
+                X{length(X)+1} = layer;
+            end
+        end
+    end
+
+    parameters.X = X;
+
     % initialize A
     parameters.A = false(length(latp), length(lonp), parameters.T);
     [~, earliest_event] = min(parameters.dataset_idx(:,3));
     parameters.A(parameters.dataset_idx(earliest_event,1), parameters.dataset_idx(earliest_event,2), 1) = true;
     % set a seed and define matrix of random numbers
-    rng(12);
-    U = rand(length(latp), length(lonp), parameters.T, n_averages);
+    % rng(12);
+    % U = rand(length(latp), length(lonp), parameters.T, n_averages);
     parameters.n = n_averages;
-    parameters.U = U;
+    parameters.active_layers = active_layers;
+
 end
