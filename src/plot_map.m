@@ -12,7 +12,10 @@ function plot_map(parameters,errors)
     'PaperPosition',[.25 .25 8 6]);
     hold on;
 
-    worldmap(["Ireland", "Iran"])
+    latlim = parameters.lat;
+    lonlim = parameters.lon;
+    % worldmap(["Ireland", "Iran"])
+    worldmap(latlim, lonlim)
     axis xy
 
     % color map with A
@@ -39,7 +42,7 @@ function plot_map(parameters,errors)
     colormap(cmap)
 
     % Loop over each point and plot with the corresponding color
-    scatterm(parameters.dataset_lat, parameters.dataset_lon, 10, errors, 'filled');
+    scatterm(parameters.dataset_lat, parameters.dataset_lon, 20, errors, 'filled');
     cb = colorbar;
     ylabel(cb,'t_{data} - t_{sim}','FontSize',16);
     max_abs_value = max(abs(errors(:)));

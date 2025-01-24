@@ -1,29 +1,32 @@
-function parameters = data_prep(n_averages, active_layers)
+function parameters = data_prep(n_averages, active_layers, lats, lons, years)
 
     parameters = struct();
     % load build
     load('data/prep/geography_0p5deg.mat');
     
-    
-    % load pinhasi
-    pinhasi = readtable( ...
-        'data/raw/pinhasi/Neolithic_timing_Europe_PLOS.xls');
+    % 
+    % % load pinhasi
+    % pinhasi = readtable( ...
+    %     'data/raw/pinhasi/Neolithic_timing_Europe_PLOS.xls');
+    % 
+    % pinhasi = pinhasi(pinhasi.Var1 == "SITE",:); %% keep only site rows
+    % 
+    % pinhasi = renamevars(pinhasi, {'Latitude', 'Longitude', 'CALC14BP'}, ...
+    %     {'lat', 'lon', 'bp'});
+    % 
+    % pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
+    % pinhasi.bp = 2000 - pinhasi.bp; % from BP to years
 
-    pinhasi = pinhasi(pinhasi.Var1 == "SITE",:); %% keep only site rows
-
-    pinhasi = renamevars(pinhasi, {'Latitude', 'Longitude', 'CALC14BP'}, ...
-        {'lat', 'lon', 'bp'});
-
-    pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
-    pinhasi.bp = 2000 - pinhasi.bp; % from BP to year
-
-    parameters.dataset_lat = pinhasi.lat;
-    parameters.dataset_lon = pinhasi.lon;
-    parameters.dataset_bp = pinhasi.bp;
+    parameters.dataset_lat = lats;
+    parameters.dataset_lon = lons;
+    parameters.dataset_bp = years;
 
     % restrict to Europe/Iran range
-    topleft = [60, -17.19];
-    bottomright = [15, 65.07];
+    padding = 5;
+    topleft = [max(lats), min(lons)] + [padding -padding];
+    bottomright = [min(lats), max(lons)] + [-padding padding];
+    % topleft = [60, -17.19];
+    % bottomright = [15, 65.07];
 
     latidx = lat <= topleft(1) & lat >= bottomright(1);
     lonidx = lon >= topleft(2) & lon <= bottomright(2);
@@ -33,24 +36,23 @@ function parameters = data_prep(n_averages, active_layers)
     parameters.lat = [latp(1) latp(end)];
     parameters.lon = [lonp(1) lonp(end)];
 
-
     % define time array
     parameters.dt = 40; % time step in years
-    parameters.start_time = floor(min(pinhasi.bp)/parameters.dt)*parameters.dt;
-    parameters.end_time = ceil(max(pinhasi.bp)/parameters.dt)*parameters.dt + 500; % add 1000 years to end_time
+    parameters.start_time = floor(min(years)/parameters.dt)*parameters.dt;
+    parameters.end_time = ceil(max(years)/parameters.dt)*parameters.dt + 1000; % add 1000 years to end_time
     parameters.T = round((parameters.end_time - parameters.start_time)/parameters.dt + 1);
 
     parameters.times = parameters.start_time:parameters.dt:parameters.end_time;
 
     % create matrix storing x,y,t indices coordinates of pinhasi sites
-    parameters.dataset_idx = zeros(length(pinhasi.lat),3);
-    for event_index = 1:length(pinhasi.lat)
-        lat_event = pinhasi.lat(event_index);
-        lon_event = pinhasi.lon(event_index);
+    parameters.dataset_idx = zeros(length(lats),3);
+    for event_index = 1:length(lats)
+        lat_event = lats(event_index);
+        lon_event = lons(event_index);
         [~, index_x] = min(abs(latp - lat_event));
         [~, index_y] = min(abs(lonp - lon_event));
  
-        [~, index_t] = min(abs(parameters.times - pinhasi.bp(event_index)));
+        [~, index_t] = min(abs(parameters.times - years(event_index)));
         parameters.dataset_idx(event_index,:) = [index_x, index_y, index_t];
     end
 

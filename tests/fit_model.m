@@ -11,7 +11,7 @@ load = false;
 if load == false
 
     number_of_averages = 100;
-    filename = 'optimization_run_CSI_';
+    filename = 'Cobo_dataset_CSI_SEA_layers';
     filename = filename + string(number_of_averages);
     filename = filename + "_";
     filename = filename + string(t);
@@ -45,7 +45,7 @@ if level < 1
 
     ranges = [average_range; anisotropy_range; csi_range; hydro_range];
 
-    sage_layers = [];
+    sage_layers = [0];
     
     for i = 0:16
         if ismember(i,sage_layers)
@@ -70,8 +70,27 @@ end
 addpath('src');
  
 if level < 2
+
+    % load pinhasi
+    % pinhasi = readtable( ...
+    %     'data/raw/pinhasi/Neolithic_timing_Europe_PLOS.xls');
+    % 
+    % pinhasi = pinhasi(pinhasi.Var1 == "SITE",:); %% keep only site rows
+    % 
+    % pinhasi = renamevars(pinhasi, {'Latitude', 'Longitude', 'CALC14BP'}, ...
+    %     {'lat', 'lon', 'bp'});
+    % 
+    % pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
+    % pinhasi.bp = 2000 - pinhasi.bp; % from BP to year
+    % 
+    % parameters = data_prep(number_of_averages, active_layers, pinhasi.lat, pinhasi.lon, pinhasi.bp);
     
-    parameters = data_prep(number_of_averages, active_layers);
+    % LOAD COBO et al
+
+    cobo = readtable( ...
+         'data/raw/cobo_etal/cobo_etal_data.xlsx');
+    parameters = data_prep(number_of_averages, active_layers, cobo.Latitude, cobo.Longitude, cobo.Est_DateMean_BC_AD_);
+
     % data_prep creates parameters struct with the following fields:
     % parameters.A - initial matrix
     % parameters.T - number of time steps
@@ -175,7 +194,7 @@ function stop = saveIterations(x, optimValues, state)
     % No stopping criterion
     stop = false;
 end
-%%
+
 if level < 5
     
     factors = [1];
@@ -185,32 +204,35 @@ if level < 5
         objective_function = @(theta) optimize_model(theta, parameters, factor);
         theta_start = theta_start*factor;
         
+        % WITH GRADIENT
+        options = optimoptions('fminunc', ...
+            'Display', 'iter', ...
+            'Algorithm', 'trust-region', ...
+            'HessianFcn','objective', ...
+            'SpecifyObjectiveGradient',true, ...
+            'StepTolerance', 1e-6*factor, ...,
+            "FiniteDifferenceStepSize", 0.1*factor, ...,
+            "FunctionTolerance",0.00001, ...
+            "OptimalityTolerance",2e-6/factor, ...
+            'MaxFunctionEvaluations', 10000, ...
+            'MaxIterations', 10000, ...
+            'OutputFcn', @saveIterations, ... % Call the custom function
+            "UseParallel", true);
+
+        % % WITHOUT GRADIENT
         % options = optimoptions('fminunc', ...
         %     'Display', 'iter', ...
-        %     'Algorithm', 'trust-region', ...
-        %     'HessianFcn','objective', ...
-        %     'SpecifyObjectiveGradient',true, ...
-        %     'StepTolerance', 1e-6*factor, ...,
-        %     "FiniteDifferenceStepSize", 0.1*factor, ...,
-        %     "FunctionTolerance",0.00001, ...
-        %     "OptimalityTolerance",2e-6/factor, ...
+        %     'Algorithm', 'quasi-newton', ...
+        %     'SpecifyObjectiveGradient', false, ... % Use numerical gradients
+        %     'HessianFcn', [], ... % Use numerical Hessian
         %     'MaxFunctionEvaluations', 10000, ...
-        %     'MaxIterations', 10000, ...
+        %     "FiniteDifferenceStepSize", 5e-2*factor, ...,
         %     'OutputFcn', @saveIterations, ... % Call the custom function
-        %     "UseParallel", true);
-
-        options_no_grad = optimoptions('fminunc', ...
-            'Display', 'iter', ...
-            'Algorithm', 'quasi-newton', ...
-            'SpecifyObjectiveGradient', false, ... % Use numerical gradients
-            'HessianFcn', [], ... % Use numerical Hessian
-            'MaxFunctionEvaluations', 10000, ...
-            "FiniteDifferenceStepSize", 5e-2*factor, ...,
-            'MaxIterations', 10000);
+        %     'MaxIterations', 10000);
        
         % Run fminunc
         
-        [theta, fval, exitflag, output, grad, hessian] = fminunc(objective_function, theta_start, options_no_grad);
+        [theta, fval, exitflag, output, grad, hessian] = fminunc(objective_function, theta_start, options);
 
         
         theta = theta/factor;
@@ -249,13 +271,13 @@ end
 %     save(filename, "level", "theta_final","runtime", '-append')
 % end
 %%
-parameters = data_prep(1000,active_layers);
-[error, grad, hessian] = optimize_model(theta, parameters, factor);
+parameters = data_prep(number_of_averages, active_layers, cobo.Latitude, cobo.Longitude, cobo.Est_DateMean_BC_AD_);
+[error, grad, hessian] = optimize_model(theta_optim, parameters, factor);
 parameters.calculate_W = true;
 result = run_model(parameters,theta_optim);
 parameters.calculate_W = false;
 jacobian = grad*grad';
-var_mat = 1/length(parameters.dataset_idx) * (hessian)^-1 * (jacobian + result.W) * (hessian)^-1;
+var_mat = 1/length(parameters.dataset_idx) * (hessian)^-1 * (jacobian) * (hessian)^-1;
 standard_errors = sqrt(diag(var_mat))
 
 %% report results

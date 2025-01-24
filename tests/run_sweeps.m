@@ -8,8 +8,10 @@ addpath('src');
 rng(12) % set random seed
 
 % choose whether to load pinhasi dataset or create a dataset
-active_layers = [1 0 1 0 1];
-parameters = data_prep(20, active_layers);
+active_layers = [1 0 1 0 0];
+cobo = readtable( ...
+     'data/raw/cobo_etal/cobo_etal_data.xlsx');
+parameters = data_prep(50, active_layers, cobo.Latitude, cobo.Longitude, cobo.Est_DateMean_BC_AD_);
 % theory_theta = [0.15 0.05 0.1];
 % parameters = create_dataset(theory_theta, 20, [53.0627, 43.6865]);
 % data_prep creates parameters struct with the following fields:
@@ -33,8 +35,8 @@ parameters = data_prep(20, active_layers);
 % theta(2) - average diffusion speed N-S
 % theta(3) - contribution of terrain (b1)
 objective_function = @(theta) run_model(parameters, theta).squared_error;
-theta_0 = linspace(-1.,1.,21);
-theta_1 = linspace(-1.,1.,21);
+theta_0 = linspace(-5.,15.,21);
+theta_1 = linspace(-5.,15.,21);
 theta_2 = [0];
 all_errors = zeros(length(theta_0),length(theta_1),length(theta_2));
 all_gradients = zeros(length(theta_0),length(theta_1),length(theta_2),3);
@@ -60,5 +62,5 @@ for t = 1:length(theta_2)
     end
 end
 
-save("pinhasi_dataset_theta_0_2.mat","all_errors","all_gradients","theta_0","theta_1","theta_2","flag_1","flag_2",'-mat')
+save("cobo_dataset_av_csi.mat","all_errors","all_gradients","theta_0","theta_1","theta_2","flag_1","flag_2",'-mat')
 disp("Done!")

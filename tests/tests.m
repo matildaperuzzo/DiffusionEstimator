@@ -1,6 +1,6 @@
 % save("sweep_1_avg_dt_20.mat", "errors", "terrain_theta", "x_theta", "y_theta",'final_As');
 
-load("pinhasi_dataset_theta_0_2_5.mat")
+load("cobo_dataset_av_csi.mat")
 % load("pinhasi_sweep_with_exit_flags.mat")
 
 [min_error, min_error_idx] = min(all_errors(:));
@@ -8,9 +8,9 @@ load("pinhasi_dataset_theta_0_2_5.mat")
 
 %% Error landscape and gradient
 
-if false
+if true
    
-    [X,Y] = meshgrid(theta_0,theta_2);
+    [X,Y] = meshgrid(theta_0,theta_1);
     
     % Define the three colors (RGB format):
     color1 = [23/255, 42/255, 80/255];   % Blue
@@ -29,18 +29,18 @@ if false
     ind = idx_1;
     figure(1)
     hold on;
-    all_errors = squeeze(all_errors(:,ind,:));
-    h = pcolor(X,Y,squeeze(all_errors)');
+    all_errors = squeeze(all_errors);
+    h = pcolor(X,Y,all_errors');
     % contour(X,Y,squeeze(f)',v,'ShowText','on')
     colorbar;
     ylabel("theta_2")
     xlabel("theta_0")
     % plot point with lowest error in red
     hold on
-    plot(theta_0(idx_0), theta_2(idx_2), 'r*', 'MarkerSize',10)
+    plot(theta_0(idx_0), theta_1(idx_1), 'r*', 'MarkerSize',10)
     % add text box with error value next to point with white background
     % annotation('textbox', [0.42 0.49 0.1 0.1], 'String', sprintf('error^{1/2} = %f', sqrt(min_error)*dt), 'EdgeColor', 'none', 'BackgroundColor', 'white', 'HorizontalAlignment', 'center', 'FontSize', 14);
-    max_abs_value = 9000;%max(abs(all_grad(:)))/20;
+    max_abs_value = 4.345e6;%max(abs(all_grad(:)))/20;
     clim([min(all_errors(:)), max_abs_value]);
     
     % figure(2)
