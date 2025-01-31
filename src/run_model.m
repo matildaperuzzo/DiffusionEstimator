@@ -19,6 +19,8 @@ function result = run_model(parameters, theta)
     percentage_data = zeros(nt,1);
     percentage_model = zeros(nt,1);
     percentage_squared_error = 0;
+
+    % check if parameters specifies to calculate W
     if isfield(parameters, 'calculate_W')
         calculate_W = parameters.calculate_W;
         W = zeros(length(theta), length(data));
@@ -27,24 +29,24 @@ function result = run_model(parameters, theta)
         W = 0;
     end
 
-
-    data_times = parameters.dataset_idx(:,3);
-    % the following is to ensure reproducible results while using parfor
-    % module
-    rng(12)
-    stream = RandStream('mlfg6331_64'); % Create a reproducible random stream
-    spmd
-        RandStream.setGlobalStream(stream); % Set the stream for each worker
+    % check if parameters gives random matrix, if not create one
+    if isfield(parameters, 'U')
+        U = parameters.U;
+    else 
+        rng(12)
+        U = rand(stream, size(A_start));
     end
 
+    data_times = parameters.dataset_idx(:,3);
+
     for rep = 1:parameters.n
+        
         % Run the model for each instance
-        U = rand(stream, size(A_start));
         if calculate_W == false
             [A, exfl1] = run_model_av(A_start, nt, theta, X, U, active_layers);
             % calculate arrival times
             [times, exfl2] = calculate_times(A, data);
-            times = times;
+            
         elseif calculate_W
             f = @(theta)calculate_times(run_model_av(A_start, nt, theta, X, U, active_layers),data)*dt;
             g = calculateGradient(f,theta);
@@ -63,7 +65,8 @@ function result = run_model(parameters, theta)
         percentage_data = percentage_data + per_data;
         percentage_model = percentage_model + per_model;
         percentage_squared_error = percentage_squared_error + sum((per_data-per_model).^2);
-
+        
+        
     end
 
 

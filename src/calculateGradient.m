@@ -10,7 +10,7 @@ function grad = calculateGradient(f, x0, epsilon)
     %   grad - Gradient vector of f at x0.
     
     if nargin < 3
-        epsilon = 5e-2; % Default perturbation value
+        epsilon = 5e-3; % Default perturbation value
     end
     
     n = length(x0);      % Number of variables
@@ -24,6 +24,6 @@ function grad = calculateGradient(f, x0, epsilon)
         e_i(i) = epsilon;
         
         % Approximate partial derivative
-        grad(i,:) = (f(x0 + e_i) - f(x0 - e_i)) / (2 * epsilon);
+        grad(i,:) = 10*(f(x0 + e_i) - f(x0 - e_i)) / (2 * epsilon);
     end
 end

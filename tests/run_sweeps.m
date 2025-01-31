@@ -42,25 +42,32 @@ all_errors = zeros(length(theta_0),length(theta_1),length(theta_2));
 all_gradients = zeros(length(theta_0),length(theta_1),length(theta_2),3);
 flag_1 = zeros(length(theta_0),length(theta_1),length(theta_2));
 flag_2 = zeros(length(theta_0),length(theta_1),length(theta_2));
-for t = 1:length(theta_2)
-    for y = 1:length(theta_1)
-        for x = 1:length(theta_0)
-            theta = [theta_0(x); theta_1(y); theta_2(t)];
-            tic
-            result = run_model(parameters, theta);
-            
-            % disp(toc)
-            all_errors(x,y,t) = result.squared_error;
-            % grads = calculateGradient(objective_function, theta, 0.1);
-            % all_gradients(x,y,t,:) = grads;
-            flag_1(x,y,t) = result.exitflag_1;
-            flag_2(x,y,t) = result.exitflag_2; 
-            disp(theta);
-            disp(all_errors(x,y,t));
+% for t = 1:length(theta_2)
+%     for y = 1:length(theta_1)
+%         for x = 1:length(theta_0)
+%             theta = [theta_0(x); theta_1(y); theta_2(t)];
+%             tic
+%             result = run_model(parameters, theta);
+% 
+%             disp(toc)
+%             all_errors(x,y,t) = result.squared_error;
+%             % grads = calculateGradient(objective_function, theta, 0.1);
+%             % all_gradients(x,y,t,:) = grads;
+%             flag_1(x,y,t) = result.exitflag_1;
+%             flag_2(x,y,t) = result.exitflag_2; 
+%             disp(theta);
+%             % disp(all_errors(x,y,t));
+% 
+%         end
+%     end
+% end
 
-        end
-    end
-end
+ranges = [[-2 2];[-2,2]];
+n_points = 51;
+[theta_min, on_edge, min_error, errors] = sweep(ranges, n_points, 0, parameters);
+
+all_errors = reshape(errors, [n_points,n_points]);
 
 save("cobo_dataset_av_csi_2_start.mat","all_errors","all_gradients","theta_0","theta_1","theta_2","flag_1","flag_2",'-mat')
 disp("Done!")
+

@@ -3,7 +3,7 @@
 clear all
 tic
 t = datetime;
-
+t.Format = 'yyyy-MM-dd_HH-mm';
 % choose whether to load or start
 load = false;
 
@@ -36,7 +36,7 @@ if level < 1
     
     % Average diffusion
     average_range = [-1.0, 1.0];
-    % Anisotropy
+    % Anisotropy 
     anisotropy_range = [0.0, 0.0];
     % csi
     csi_range = [0.0, 0.0]; 

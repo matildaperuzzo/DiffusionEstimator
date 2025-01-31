@@ -41,7 +41,7 @@ if true
     % add text box with error value next to point with white background
     % annotation('textbox', [0.42 0.49 0.1 0.1], 'String', sprintf('error^{1/2} = %f', sqrt(min_error)*dt), 'EdgeColor', 'none', 'BackgroundColor', 'white', 'HorizontalAlignment', 'center', 'FontSize', 14);
     max_abs_value = max(abs(all_grad(:)));
-    clim([min(all_errors(:)), max_abs_value]);
+    % clim([min(all_errors(:)), max_abs_value]);
     
     % figure(2)
     % % plot magnitude of gradient of error in the first 2 dimensions

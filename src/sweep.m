@@ -12,7 +12,7 @@ function [theta_min, on_edge, min_error, errors] = sweep(ranges, num_points, max
 
     while on_edge
         w = waitbar(0,"Performing grid search, iteration " + string(iter));
-        for i = 1:length(thetas(:,1))
+        parfor i = 1:length(thetas(:,1))
 
             theta = thetas(i,:);
             result = run_model(parameters, theta);
@@ -47,8 +47,6 @@ function [theta_min, on_edge, min_error, errors] = sweep(ranges, num_points, max
         iter = iter + 1;
         
     end
-
-    disp('end');
 
 end
 
