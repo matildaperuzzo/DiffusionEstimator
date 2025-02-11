@@ -130,7 +130,7 @@ function [exfl1,a] = step(a, theta, X, U, active_layers)
     f = find(M); % indices of frontier cells
     U = squeeze(U);
     k = 1;
-    probabilities = 1./(1 + exp(-k * (M(f) - 0.5)));
+    probabilities = 1./(1 + exp(-k * (M(f))));
     adopt = U(f)<= probabilities;
 
     a(f(adopt)) = true; % update activated cells to include adopted
