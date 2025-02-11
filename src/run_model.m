@@ -29,18 +29,11 @@ function result = run_model(parameters, theta)
         W = 0;
     end
 
-    % check if parameters gives random matrix, if not create one
-    if isfield(parameters, 'U')
-        U = parameters.U;
-    else 
-        rng(12)
-        U = rand(stream, size(A_start));
-    end
-
+    rng(12)
     data_times = parameters.dataset_idx(:,3);
 
     for rep = 1:parameters.n
-        
+        U = rand(size(A_start));
         % Run the model for each instance
         if calculate_W == false
             [A, exfl1] = run_model_av(A_start, nt, theta, X, U, active_layers);
@@ -49,7 +42,7 @@ function result = run_model(parameters, theta)
             
         elseif calculate_W
             f = @(theta)calculate_times(run_model_av(A_start, nt, theta, X, U, active_layers),data)*dt;
-            g = calculateGradient(f,theta);
+            g = calculateGradient(f, theta, 0.001, 1);
             W = W + g;
             [A, exfl1] = run_model_av(A_start, nt, theta, X, U, active_layers);
             % calculate arrival times

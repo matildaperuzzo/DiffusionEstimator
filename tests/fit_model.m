@@ -10,7 +10,7 @@ load = false;
 %%
 if load == false
 
-    number_of_averages = 200;
+    number_of_averages = 100;
     filename = 'Cobo_two_start_dataset_Hydro_layers';
     filename = filename + string(number_of_averages);
     filename = filename + "_";
@@ -168,10 +168,10 @@ function [error, grad, hessian] = optimize_model(theta, parameters, factor)
     error = result.squared_error;
     if nargout > 1
         f = @(theta) run_model(parameters, theta).squared_error;
-        grad = calculateGradient(f, theta, 0.01, factor);
+        grad = calculateGradient(f, theta, 0.001, factor);
     end
     if nargout > 2
-        hessian = calculateHessian(f, theta, 0.01);
+        hessian = calculateHessian(f, theta, 0.001);
     end
 end
 
@@ -195,13 +195,13 @@ function stop = saveIterations(x, optimValues, state)
 end
 
 if level < 5
-parameters = data_prep(number_of_averages*100, active_layers, cobo.Latitude, cobo.Longitude, cobo.Est_DateMean_BC_AD_);
+parameters = data_prep(number_of_averages, active_layers, cobo.Latitude, cobo.Longitude, cobo.Est_DateMean_BC_AD_);
 
     factors = [1];
     all_params = {};
     for factor=factors
     
-        objective_function = @(theta) optimize_model(theta, parameters, 1e7);
+        objective_function = @(theta) optimize_model(theta, parameters, 1e6);
         theta_start = theta_start*factor;
         
         % WITH GRADIENT
@@ -259,19 +259,8 @@ parameters = data_prep(number_of_averages*100, active_layers, cobo.Latitude, cob
     save(filename, 'theta_optim', "level", "min_error", "all_params", '-append')
 end
 
-% %% Level 6 - run detailed grid
-% 
-% if level < 6
-%     ranges = [0.9 1.1].*theta_optim';
-% 
-%     [theta_final, on_edge] = sweep(ranges, 11, 2, parameters);
-% 
-%     level = 6;
-%     runtime = toc;
-%     save(filename, "level", "theta_final","runtime", '-append')
-% end
 %%
-[error, grad, hessian] = optimize_model(theta_optim, parameters, factor);
+[error, grad, hessian] = optimize_model(theta_optim, parameters, 1);
 parameters.calculate_W = true;
 result = run_model(parameters,theta_optim);
 parameters.calculate_W = false;

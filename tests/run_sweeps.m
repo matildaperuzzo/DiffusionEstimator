@@ -8,10 +8,10 @@ addpath('src');
 rng(12) % set random seed
 
 % choose whether to load pinhasi dataset or create a dataset
-active_layers = [1 0 1 0 0];
+active_layers = [1 0 0 0 0];
 cobo = readtable( ...
      'data/raw/cobo_etal/cobo_etal_data.xlsx');
-parameters = data_prep(50, active_layers, cobo.Latitude, cobo.Longitude, cobo.Est_DateMean_BC_AD_);
+parameters = data_prep(100, active_layers, cobo.Latitude, cobo.Longitude, cobo.Est_DateMean_BC_AD_);
 % theory_theta = [0.15 0.05 0.1];
 % parameters = create_dataset(theory_theta, 20, [53.0627, 43.6865]);
 % data_prep creates parameters struct with the following fields:
@@ -31,11 +31,11 @@ parameters = data_prep(50, active_layers, cobo.Latitude, cobo.Longitude, cobo.Es
 
 %%
 
-ranges = [[-1.455, -1.45];[0.648, 0.653]];
+ranges = [[0.4, 0.401]];
 n_points = 21;
 [theta_min, on_edge, min_error, errors] = sweep(ranges, n_points, 0, parameters);
 
-all_errors = reshape(errors, [n_points,n_points]);
+% all_errors = reshape(errors, [n_points,n_points]);
 % 
 % save("cobo_dataset_av_csi_2_start.mat","all_errors","all_gradients","theta_0","theta_1","theta_2","flag_1","flag_2",'-mat')
 % disp("Done!")

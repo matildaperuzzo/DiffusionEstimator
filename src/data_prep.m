@@ -96,7 +96,7 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
     parameters.A(76,39,46) = true;
     % set a seed and define matrix of random numbers
     rng(12)
-    parameters.U = rand(size(parameters.A));
+    % parameters.U = rand([size(parameters.A) n_averages]);
     parameters.n = n_averages;
     parameters.active_layers = active_layers;
 

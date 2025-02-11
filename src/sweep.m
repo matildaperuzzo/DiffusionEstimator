@@ -3,7 +3,7 @@ function [theta_min, on_edge, min_error, errors] = sweep(ranges, num_points, max
     on_edge = true;
 
     thetas = getCombinations(ranges, num_points);
-    errors = zeros(length(thetas(:,1)),1);
+    errors = zeros(size(thetas(:,1)));
     
     iter = 1;
 
@@ -11,7 +11,7 @@ function [theta_min, on_edge, min_error, errors] = sweep(ranges, num_points, max
     range_mean = ranges(:,1) + range_size/2;
 
     while on_edge
-        w = waitbar(0,"Performing grid search, iteration " + string(iter));
+        % w = waitbar(0,"Performing grid search, iteration " + string(iter));
         parfor i = 1:length(thetas(:,1))
 
             theta = thetas(i,:);
@@ -21,10 +21,10 @@ function [theta_min, on_edge, min_error, errors] = sweep(ranges, num_points, max
             % store error
             errors(i) = error;
             
-            waitbar(i/length(thetas(:,1)))
+            % waitbar(i/length(thetas(:,1)))
         end
         
-        close(w)
+        % close(w)
         % find minimum error
         [min_error, min_idx] = min(errors(:));
         theta_min = thetas(min_idx,:);
