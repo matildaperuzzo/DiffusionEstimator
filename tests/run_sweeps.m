@@ -30,13 +30,17 @@ parameters = data_prep(50, active_layers, cobo.Latitude, cobo.Longitude, cobo.Es
 % parameters.n - number of averages
 
 %%
+ns = [10 50 100 500];
 
-ranges = [[-1.455, -1.45];[0.648, 0.653]];
-n_points = 21;
-[theta_min, on_edge, min_error, errors] = sweep(ranges, n_points, 0, parameters);
-
-all_errors = reshape(errors, [n_points,n_points]);
-% 
-% save("cobo_dataset_av_csi_2_start.mat","all_errors","all_gradients","theta_0","theta_1","theta_2","flag_1","flag_2",'-mat')
-% disp("Done!")
-
+for n = ns
+    parameters = data_prep(n, active_layers, cobo.Latitude, cobo.Longitude, cobo.Est_DateMean_BC_AD_);
+    ranges = [[-1.46, -1.45];[0.64, 0.65]];
+    n_points = 11;
+    [theta_min, on_edge, min_error, errors] = sweep(ranges, n_points, 0, parameters);
+    
+    all_errors = reshape(errors, [n_points,n_points]);
+    
+    figure()
+    pcolor(all_errors)
+    title(n)
+end
