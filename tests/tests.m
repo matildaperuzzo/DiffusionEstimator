@@ -1,6 +1,6 @@
 % save("sweep_1_avg_dt_20.mat", "errors", "terrain_theta", "x_theta", "y_theta",'final_As');
 
-load("generated_data/cobo_dataset_av_csi_hydro.mat")
+load("cobo_dataset_av_hydro_2_start.mat")
 % load("pinhasi_sweep_with_exit_flags.mat")
 
 [min_error, min_error_idx] = min(all_errors(:));
@@ -24,7 +24,7 @@ if true
     cmap = interp1([1, 256], [color2; color3], linspace(1, 256, numColors));
     cmap = interp1([1, 128, 256], [color1; color2; color3], linspace(1, 256, numColors));
     % colormap(parula)
-    f = flag_1+flag_2;
+    % f = flag_1+flag_2;
     v = [0.2,0.2];
     ind = idx_1;
     figure(1)
@@ -40,8 +40,8 @@ if true
     plot(theta_0(idx_0), theta_1(idx_1), 'r*', 'MarkerSize',10)
     % add text box with error value next to point with white background
     % annotation('textbox', [0.42 0.49 0.1 0.1], 'String', sprintf('error^{1/2} = %f', sqrt(min_error)*dt), 'EdgeColor', 'none', 'BackgroundColor', 'white', 'HorizontalAlignment', 'center', 'FontSize', 14);
-    max_abs_value = max(abs(all_grad(:)));
-    % clim([min(all_errors(:)), max_abs_value]);
+    % max_abs_value = max(abs(all_grad(:)));
+    clim([min(all_errors(:)), 5e4]);
     
     % figure(2)
     % % plot magnitude of gradient of error in the first 2 dimensions

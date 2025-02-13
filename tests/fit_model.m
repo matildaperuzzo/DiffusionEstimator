@@ -35,13 +35,13 @@ end
 if level < 1
     
     % Average diffusion
-    average_range = [-1.0, 1.0];
+    average_range = [-2.0, 2.0];
     % Anisotropy 
     anisotropy_range = [0.0, 0.0];
     % csi
     csi_range = [0.0, 0.0]; 
     % hydro
-    hydro_range = [-1.0, 1.0];
+    hydro_range = [-2.0, 2.0];
 
     ranges = [average_range; anisotropy_range; csi_range; hydro_range];
 
@@ -146,18 +146,21 @@ end
 %% measure grid
 
 if level < 4
+    parameters.n = 20;
     [theta_start, on_edge, min_error, errors] = sweep(ranges, 6, 1, parameters);
+
+    ranges = [0.15 1.15].*theta_start';  
+
+    [theta_start, ~, min_error, errors] = sweep(ranges, 6, 1, parameters);
+
+    parameters.n = number_of_averages;
+    level = 4;
 
     if on_edge
         disp("Likely the given ranges are wrong")
+    else
+        disp('Local minimum found at '+ str(theta_start))
     end
-    % 
-    % ranges = [0.75 1.25].*theta_start';  
-    % 
-    % [theta_start, ~, min_error, errors] = sweep(ranges, 6, 1, parameters);
-
-
-    level = 4;
     save(filename, 'theta_start', "level", "min_error", '-append')
 end
 
