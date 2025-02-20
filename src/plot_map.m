@@ -18,15 +18,17 @@ function plot_map(parameters,errors, adjust_scale, A_result)
 
     latlim = parameters.lat;
     lonlim = parameters.lon;
-    % worldmap(["Ireland", "Iran"])
+
     worldmap(latlim, lonlim)
+    
     axis xy
 
     % color map with A
-    % geoshow(sum(A,3), R, 'DisplayType', 'texturemap')
+    geoshow(sum(A,3), R, 'DisplayType', 'texturemap')
     %make sea white
+    
     geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
-        'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
+        'Polygon', 'FaceColor', 'blue', 'FaceAlpha', 0.5)
 
     framem('FLineWidth', 1, 'FontSize', 7)
     [size_x size_y size_t] = size(A);
@@ -46,7 +48,7 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     colormap(cmap)
 
     % Loop over each point and plot with the corresponding color
-    scatterm(parameters.dataset_lat, parameters.dataset_lon, 20, errors, 'filled');
+    % scatterm(parameters.dataset_lat, parameters.dataset_lon, 20, errors, 'filled');
     cb = colorbar;
     ylabel(cb,'t_{data} - t_{sim}','FontSize',16);
     max_abs_value = max(abs(errors(:)));
