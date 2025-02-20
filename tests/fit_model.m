@@ -11,7 +11,7 @@ load = false;
 if load == false
 
     number_of_averages = 100;
-    filename = 'Cobo_dataset_hydro';
+    filename = 'Pinhasi_dataset_av_';
     filename = filename + string(number_of_averages);
     filename = filename + "_";
     filename = filename + string(t);
@@ -40,11 +40,11 @@ if level < 1
     % csi
     csi_range = [0.0, 0.0]; 
     % hydro
-    hydro_range = [-2.0, 2.0];
+    hydro_range = [0.0, 0.0];
 
     ranges = [average_range; anisotropy_range; csi_range; hydro_range];
 
-    sage_layers = [0];
+    sage_layers = [];
     
     for i = 0:16
         if ismember(i,sage_layers)
@@ -70,33 +70,41 @@ addpath('src');
  
 if level < 2
 
-    % load pinhasi
-    % pinhasi = readtable( ...
-    %     'data/raw/pinhasi/Neolithic_timing_Europe_PLOS.xls');
-    % 
-    % pinhasi = pinhasi(pinhasi.Var1 == "SITE",:); %% keep only site rows
-    % 
-    % pinhasi = renamevars(pinhasi, {'Latitude', 'Longitude', 'CALC14BP'}, ...
-    %     {'lat', 'lon', 'bp'});
-    % 
-    % pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
-    % pinhasi.bp = 2000 - pinhasi.bp; % from BP to year
-    % 
-    % x = pinhasi.lat;
-    % y = pinhasi.lon;
-    % t = pinhasi.bp;
+    dataset = 'pinhasi';
+
+    if strcmp(dataset,'pinhasi')
+        % load pinhasi
+        pinhasi = readtable( ...
+            'data/raw/pinhasi/Neolithic_timing_Europe_PLOS.xls');
     
-    % LOAD COBO et al
-
-    cobo = readtable( ...
-         'data/raw/cobo_etal/cobo_etal_data.xlsx');
-
-    x = cobo.Latitude;
-    y = cobo.Longitude;
-    t = cobo.Est_DateMean_BC_AD_;
+        pinhasi = pinhasi(pinhasi.Var1 == "SITE",:); %% keep only site rows
+    
+        pinhasi = renamevars(pinhasi, {'Latitude', 'Longitude', 'CALC14BP'}, ...
+            {'lat', 'lon', 'bp'});
+    
+        pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
+        pinhasi.bp = 2000 - pinhasi.bp; % from BP to year
+    
+        x = pinhasi.lat;
+        y = pinhasi.lon;
+        t = pinhasi.bp;
+    
+    elseif strcmp(dataset,'cobo')
+        % LOAD COBO et al
+    
+        cobo = readtable( ...
+             'data/raw/cobo_etal/cobo_etal_data.xlsx');
+    
+        x = cobo.Latitude;
+        y = cobo.Longitude;
+        t = cobo.Est_DateMean_BC_AD_;
+    end
 
     parameters = data_prep(number_of_averages, active_layers, x, y, t);
-
+    
+    if strcmp(dataset,'cobo')
+        parameters.A(76,39,46) = true;
+    end
     % data_prep creates parameters struct with the following fields:
     % parameters.A - initial matrix
     % parameters.T - number of time steps
@@ -155,7 +163,7 @@ if level < 4
     parameters.n = 20;
     [theta_start, on_edge, min_error, errors] = sweep(ranges, 6, 2, parameters);
 
-    ranges = [0.85 1.15].*theta_start';  
+    ranges = [0.8 1.2].*theta_start';  
 
     [theta_start, ~, min_error, errors] = sweep(ranges, 6, 1, parameters);
 

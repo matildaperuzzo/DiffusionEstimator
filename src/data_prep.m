@@ -93,7 +93,7 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
     [~, earliest_event] = min(parameters.dataset_idx(:,3));
     parameters.A(parameters.dataset_idx(earliest_event,1), parameters.dataset_idx(earliest_event,2), 1) = true;
     % add second start point
-    parameters.A(76,39,46) = true;
+   
     % set a seed and define matrix of random numbers
     rng(12)
     % parameters.U = rand([size(parameters.A) n_averages]);
