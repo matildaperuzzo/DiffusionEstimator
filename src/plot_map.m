@@ -24,11 +24,11 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     axis xy
 
     % color map with A
-    geoshow(sum(A,3), R, 'DisplayType', 'texturemap')
+    % geoshow(sum(A,3), R, 'DisplayType', 'texturemap')
     %make sea white
     
     geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
-        'Polygon', 'FaceColor', 'blue', 'FaceAlpha', 0.5)
+        'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
 
     framem('FLineWidth', 1, 'FontSize', 7)
     [size_x size_y size_t] = size(A);
@@ -45,14 +45,15 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     % Create a colormap by interpolating between these colors:
     cmap = interp1([1, 128, 256], [color1; color2; color3], linspace(1, 256, numColors));
 
+    % addpath('cmaps');
+    % colormap(flipud(brewermap([],'Spectral')))
     colormap(cmap)
 
     % Loop over each point and plot with the corresponding color
-    % scatterm(parameters.dataset_lat, parameters.dataset_lon, 20, errors, 'filled');
+    scatterm(parameters.dataset_lat, parameters.dataset_lon, 20, errors, 'filled');
     cb = colorbar;
     ylabel(cb,'t_{data} - t_{sim}','FontSize',16);
     max_abs_value = max(abs(errors(:)));
-
 
     if nargin > 2
         if adjust_scale

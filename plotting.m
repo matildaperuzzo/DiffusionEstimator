@@ -1,6 +1,3 @@
-
-
-
 active_layers = [1 0 1 0 1];
 % load pinhasi
 pinhasi = readtable( ...
@@ -75,14 +72,14 @@ x = pinhasi.lat;
 y = pinhasi.lon;
 t = pinhasi.bp;
 active_layers_1 = [1 0 0 0];
-theta_1 = [-1.9027];
+theta_1 = [-0.69];
 
 parameters_1 = data_prep(50, active_layers_1, x,y,t);
 result_1 = run_model(parameters_1, theta_1);
 [x,y,colors] = get_plot_coords(parameters_1, result_1);
 hold on;
 for i = 1:length(x)
-    line([x(i), x(i)], [0, y(i)/1000], 'Color', colors(i, :), 'LineWidth', 2);
+    line([x(i), x(i)], [0, y(i)/1000], 'Color', colors(i, :), 'LineWidth', 1);
 end
 
 
@@ -97,7 +94,7 @@ x = pinhasi.lat;
 y = pinhasi.lon;
 t = pinhasi.bp;
 active_layers_2 = [1 0 1 0];
-theta_2 = [-0.51, -1.25];
+theta_2 = [-1.34, 0.45];
 
 parameters_2 = data_prep(50, active_layers_2, x,y,t);
 result_2 = run_model(parameters_2, theta_2);
@@ -105,7 +102,7 @@ result_2 = run_model(parameters_2, theta_2);
 [x,y,colors] = get_plot_coords(parameters_2, result_2);
 hold on;
 for i = 1:length(x)
-    line([x(i), x(i)], [0, y(i)/1000], 'Color', colors(i, :), 'LineWidth', 2);
+    line([x(i), x(i)], [0, y(i)/1000], 'Color', colors(i, :), 'LineWidth', 1);
 end
 scatter(x, y/1000, 10, colors, 'filled');
 ylim([-5000/1000,5000/1000])
@@ -118,7 +115,7 @@ x = pinhasi.lat;
 y = pinhasi.lon;
 t = pinhasi.bp;
 active_layers_3 = [1 0 1 0 1];
-theta_3 = [-1.5660, -0.6946, 3.4000];
+theta_3 = [-1.5345,0.0028,4.4800];
 
 parameters_3 = data_prep(50, active_layers_3, x,y,t);
 result_3 = run_model(parameters_3, theta_3);
@@ -126,7 +123,7 @@ result_3 = run_model(parameters_3, theta_3);
 [x,y,colors] = get_plot_coords(parameters_3, result_3);
 hold on;
 for i = 1:length(x)
-    line([x(i), x(i)], [0, y(i)/1000], 'Color', colors(i, :), 'LineWidth', 2);
+    line([x(i), x(i)], [0, y(i)/1000], 'Color', colors(i, :), 'LineWidth', 1);
 end
 scatter(x, y/1000, 10, colors, 'filled');
 ylim([-5000/1000,5000/1000])
@@ -186,4 +183,4 @@ hold off;
 
 %% Plot outliers
 
-plot_map(parameters_3,abs(result_3.errors).^2,false, result_3.A)
+plot_map(parameters_3,result_3.errors,true, result_3.A)

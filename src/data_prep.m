@@ -76,7 +76,25 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
         X{length(X)+1} = hydro;
     end
 
-    if length(active_layers) > 4
+    if active_layers(5)
+        tmean = tmean.data;
+        tmean = tmean(latidx,lonidx);
+        tmean_mean = mean(tmean(:));
+        tmean_std = std(tmean(:));
+        tmean = (tmean-tmean_mean)/tmean_std;
+        X{length(X)+1} = tmean;
+    end
+
+    if active_layers(6)
+        prec = prec.data;
+        prec = prec(latidx,lonidx);
+        prec_mean = mean(prec(:));
+        prec_std = std(prec(:));
+        prec = (prec-prec_mean)/prec_std;
+        X{length(X)+1} = prec;
+    end
+
+    if length(active_layers) > 6
         for i = 5:length(active_layers)
             if active_layers(i)
                 layer = potveg(i-4).pot_veg_data;

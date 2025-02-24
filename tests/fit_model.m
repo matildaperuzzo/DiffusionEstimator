@@ -11,7 +11,7 @@ load = false;
 if load == false
 
     number_of_averages = 100;
-    filename = 'Pinhasi_dataset_av_';
+    filename = 'Pinhasi_dataset_av_sea_';
     filename = filename + string(number_of_averages);
     filename = filename + "_";
     filename = filename + string(t);
@@ -41,10 +41,14 @@ if level < 1
     csi_range = [0.0, 0.0]; 
     % hydro
     hydro_range = [0.0, 0.0];
+    % mean temp 
+    tmean_range = [0.0, 0.0];
+    % precipitation
+    prec_range = [0.0, 0.0];
 
-    ranges = [average_range; anisotropy_range; csi_range; hydro_range];
+    ranges = [average_range; anisotropy_range; csi_range; hydro_range; tmean_range; prec_range];
 
-    sage_layers = [];
+    sage_layers = [0];
     
     for i = 0:16
         if ismember(i,sage_layers)
@@ -161,11 +165,11 @@ end
 
 if level < 4
     parameters.n = 20;
-    [theta_start, on_edge, min_error, errors] = sweep(ranges, 6, 2, parameters);
+    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 2, parameters);
 
     ranges = [0.8 1.2].*theta_start';  
 
-    [theta_start, ~, min_error, errors] = sweep(ranges, 6, 1, parameters);
+    [theta_start, ~, min_error, errors] = sweep(ranges, 11, 1, parameters);
 
     parameters.n = number_of_averages;
     level = 4;
