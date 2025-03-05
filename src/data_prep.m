@@ -3,19 +3,6 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
     parameters = struct();
     % load build
     load('data/prep/geography_0p5deg.mat');
-    
-    % 
-    % % load pinhasi
-    % pinhasi = readtable( ...
-    %     'data/raw/pinhasi/Neolithic_timing_Europe_PLOS.xls');
-    % 
-    % pinhasi = pinhasi(pinhasi.Var1 == "SITE",:); %% keep only site rows
-    % 
-    % pinhasi = renamevars(pinhasi, {'Latitude', 'Longitude', 'CALC14BP'}, ...
-    %     {'lat', 'lon', 'bp'});
-    % 
-    % pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
-    % pinhasi.bp = 2000 - pinhasi.bp; % from BP to years
 
     parameters.dataset_lat = lats;
     parameters.dataset_lon = lons;
@@ -60,56 +47,50 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
     X = {};
     if active_layers(3)
         % add csi data
-        csidata = csidata(latidx,lonidx);
         csi_mean = mean(csidata(:));
         csi_std = std(csidata(:));
         csidata = (csidata-csi_mean)./csi_std;
+        csidata = csidata(latidx,lonidx);
         X{length(X)+1} = csidata;
     end
     if active_layers(4)
         hydro = acc.data;
-        hydro = hydro(latidx,lonidx);
         hydro(isnan(hydro)) = 0;
         hydro_mean = mean(hydro(:));
         hydro_std = std(hydro(:));
         hydro = (hydro-hydro_mean)/hydro_std;
+        hydro = hydro(latidx,lonidx);
         X{length(X)+1} = hydro;
     end
 
     if active_layers(5)
         trace_dat = trace.data;
+        trace_mean = mean(trace_dat(:));
+        trace_std = std(trace_dat(:));
+        trace_dat = (trace_dat - trace_mean)/trace_std;
         time_mask = (trace.time >= parameters.start_time) & (trace.time <= parameters.end_time);
         selected_data = trace_dat(:, :, time_mask);
         trace_dat = mean(selected_data,3);
         trace_dat = trace_dat(latidx,lonidx);
-
-        trace_mean = mean(trace_dat(:));
-        trace_std = std(trace_dat(:));
-        trace_dat = (trace_dat - trace_mean)/trace_std;
         X{length(X)+1} = trace_dat;
     end
-    %     tmean = tmean.data;
-    %     tmean = tmean(latidx,lonidx);
-    %     tmean_mean = mean(tmean(:));
-    %     tmean_std = std(tmean(:));
-    %     tmean = (tmean-tmean_mean)/tmean_std;
-    %     X{length(X)+1} = tmean;
-    % end
-    % 
-    % if active_layers(6)
-    %     prec = prec.data;
-    %     prec = prec(latidx,lonidx);
-    %     prec_mean = mean(prec(:));
-    %     prec_std = std(prec(:));
-    %     prec = (prec-prec_mean)/prec_std;
-    %     X{length(X)+1} = prec;
-    % end
+
+    if active_layers(6)
+        tmean = tmean.data;
+        tmean_mean = mean(tmean(~isnan(tmean)));
+        tmean_std = std(tmean(~isnan(tmean)));
+        tmean = (tmean-tmean_mean)/tmean_std;
+        tmean(isnan(tmean)) = 0;
+        tmean = tmean(latidx,lonidx);
+       
+        X{length(X)+1} = tmean;
+    end
 
 
     if length(active_layers) > 6
-        for i = 6:length(active_layers)
+        for i = 7:length(active_layers)
             if active_layers(i)
-                layer = potveg(i-4).pot_veg_data;
+                layer = potveg(i-5).pot_veg_data;
                 layer = layer(latidx,lonidx);
                 X{length(X)+1} = layer;
             end

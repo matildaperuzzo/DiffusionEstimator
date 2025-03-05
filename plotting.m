@@ -1,4 +1,4 @@
-active_layers = [1 0 1 0 1 0 0];
+active_layers = [1 0 1  0 0 1 0 0];
 % load pinhasi
 pinhasi = readtable( ...
     'data/raw/pinhasi/Neolithic_timing_Europe_PLOS.xls');
@@ -71,7 +71,7 @@ subplot(3, 1, 1); % Activate the first subplot
 x = pinhasi.lat;
 y = pinhasi.lon;
 t = pinhasi.bp;
-active_layers_1 = [1 0 0 0];
+active_layers_1 = [1 0 0 0 0];
 theta_1 = [-0.69];
 
 parameters_1 = data_prep(50, active_layers_1, x,y,t);
@@ -93,7 +93,7 @@ subplot(3, 1, 2); % Activate the second subplot
 x = pinhasi.lat;
 y = pinhasi.lon;
 t = pinhasi.bp;
-active_layers_2 = [1 0 1 0];
+active_layers_2 = [1 0 1 0 0];
 theta_2 = [-1.34, 0.45];
 
 parameters_2 = data_prep(50, active_layers_2, x,y,t);
@@ -114,7 +114,7 @@ subplot(3, 1, 3); % Activate the first subplot
 x = pinhasi.lat;
 y = pinhasi.lon;
 t = pinhasi.bp;
-active_layers_3 = [1 0 1 0 1];
+active_layers_3 = [1 0 1 0 0 1];
 theta_3 = [-1.5345,0.0028,4.4800];
 
 parameters_3 = data_prep(50, active_layers_3, x,y,t);
@@ -181,9 +181,23 @@ title('Linear Fit with Error Band and x = y Line');
 grid on;
 hold off;
 
-%% Plot outliers
+%% Plot csi
+
+x = pinhasi.lat;
+y = pinhasi.lon;
+t = pinhasi.bp;
 
 theta = [-1.792, 0.448];
+active_layers = [1 0 1 0 0 0 0 0];
+parameters = data_prep(50, active_layers, x,y,t);
+result = run_model(parameters,theta);
+
+%%
+data = readtable('data/raw/prune_data/Table S1.xlsx');
+x = data.Latitude;
+y = data.Longitude;
+t = data.Est_AverageDateBCE_CE;
+active_layers = [1 0 0 0 0 0 0];
 loc = 10;
 fwidth = 20;
 f = figure('Units','inches','Position',[loc loc fwidth fwidth/2.2], ...
@@ -194,5 +208,56 @@ latlim = parameters.lat;
 lonlim = parameters.lon;
 worldmap(latlim, lonlim)
 axis xy
+land = shaperead('landareas.shp', 'UseGeoCoords', true);
+geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
+        'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
+% geoshow(parameters.X{1}, R, 'DisplayType', 'texturemap')
+sizes = max(parameters.dataset_idx(:,3)) - parameters.dataset_idx(:,3)+1;
+scatterm(parameters.dataset_lat, parameters.dataset_lon, sizes, parameters.dataset_idx(:,3), 'filled');
 
-geoshow(parameters.X{1}, R, 'DisplayType', 'texturemap')
+%%
+
+t = parameters.times(parameters.dataset_idx(:,3));
+[min_t, min_t_idx] = min(t);
+dist_x = parameters.dataset_lat - parameters.dataset_lat(min_t_idx);
+dist_y = parameters.dataset_lon - parameters.dataset_lon(min_t_idx);
+dist = sqrt(dist_x.^2 + dist_y.^2);
+categories = [data.PrunusPersica, data.PrunusArmeniaca, data.PrunusSpinosa, data.PrunusCerasifera, data.domestica_type, data.insititia_type, data.PrunusSp_];
+figure
+hold on 
+% Number of colors you want to extract
+num_colors = length(categories(1,:));
+cmap = colormap('jet'); % Replace 'parula' with your desired colormap
+color_indices = linspace(1, size(cmap, 1), num_colors); % Linearly spaced indices
+color_indices = round(color_indices); % Round to nearest integer
+colors = cmap(color_indices, :); % Extract the colors
+
+for i = 1:length(categories(1,:))-1
+    t_c = t(~isnan(categories(:,i)));
+    dist_c = dist(~isnan(categories(:,i)));
+
+    scatter(t_c,dist_c,'MarkerEdgeColor',colors(i,:), 'MarkerFaceColor', colors(i,:))
+
+end
+xlabel("year (BP)")
+ylabel("distance from oldest point")
+
+%%
+f = figure('Units','inches','Position',[loc loc fwidth fwidth/2.2], ...
+    'PaperPosition',[.25 .25 8 6]);
+R = georefcells(parameters.lat, parameters.lon, ...
+        size(parameters.X{1}));
+latlim = parameters.lat;
+lonlim = parameters.lon;
+worldmap(latlim, lonlim)
+axis xy
+land = shaperead('landareas.shp', 'UseGeoCoords', true);
+geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
+        'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
+% geoshow(parameters.X{1}, R, 'DisplayType', 'texturemap')
+
+for i = 1:length(categories(1,:))-1
+    x = parameters.dataset_lat(~isnan(categories(:,i)));
+    y = parameters.dataset_lon(~isnan(categories(:,i)));
+    scatterm(x,y, 20, colors(i,:), 'filled');
+end

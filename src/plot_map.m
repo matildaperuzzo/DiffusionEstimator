@@ -1,4 +1,5 @@
 function plot_map(parameters,errors, adjust_scale, A_result)
+
     if nargin > 3
         A = A_result;
     else

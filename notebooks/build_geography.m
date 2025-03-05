@@ -272,109 +272,71 @@ csidata = flipud(csidata);
 
 save(filename, 'csidata', '-append')
 
+%% tmean
 
-%% t-mean
+folder = 'data/raw/wc2.1_30s_tavg'; % Replace with your folder path
 
-filenames = {'tmean1','tmean2','tmean3','tmean4','tmean5','tmean6','tmean7','tmean8','tmean9','tmean10','tmean11','tmean12'};
+% Get a list of all .tif files in the folder
+file_list = dir(fullfile(folder, '*.tif'));
 
-directory = 'data/raw/WorldClim/tmean_5m_bil/';
-
-for f = 1:length(filenames)
-
-    % prepare parameters for BIL file import
-    fn = strcat(directory ,filenames{f}, '.bil');
-    hdrfile = strcat(directory, filenames{f}, '.hdr');
-    hdr = importdata(hdrfile, '\t');
-
-    for k=1:length(hdr)
-        hdr{k} = regexp(hdr{k},'\s+','split');
-    end
-
-    % import BIL file
-    rowscols = [str2num(hdr{3}{2}) ...
-        str2num(hdr{4}{2}) ...
-        str2num(hdr{5}{2})]; % [NROWS NCOLS NBANDS]
-    precision = strcat('int',hdr{6}{2}); % from NBITS and PIXEL TYPE = int
-    offset = 0; % since the header is not included in this file
-    interleave = 'bil'; % LAYOUT
-    byteorder = 'ieee-le'; % BYTEORDER = I
-    data = multibandread(fn, ...
-        rowscols, precision, offset, interleave, byteorder);
-
-    data(data==-9999) = 0;
-    data = flipud(data);
-
-    % Actual delta
-    delta_x = 1/10;
-    delta_y = 1/10.;
-    [size_x, size_y] = size(data);
-    new_x = round(size_x * delta_x / delta); 
-    new_y = round(size_y * delta_y / delta); 
-
-    data = imresize(data, [new_x, new_y], 'bilinear');
-
-    if f == 1
-        data_all = data;
-    elseif f > 1
-        data_all = data_all + data/length(filenames);
-    end
+% Check if there are any .tif files in the folder
+if isempty(file_list)
+    error('No .tif files found in the specified folder.');
 end
 
-tmean = struct('data', data_all);
+% Initialize variables
+num_files = length(file_list); % Number of .tif files
+first_image = imread(fullfile(folder, file_list(1).name)); % Read the first image to get dimensions
+image_sum = double(first_image); % Initialize the sum with the first image
+
+% Loop through the remaining files and accumulate the sum
+for i = 2:num_files
+    % Read the current image
+    current_image = imread(fullfile(folder, file_list(i).name));
+    
+    % Add the current image to the sum
+    image_sum = image_sum + double(current_image);
+end
+
+% Compute the average image
+average_image = image_sum / num_files;
+
+% Convert the average image back to the original data type (e.g., uint8)
+average_image = cast(average_image, class(first_image));
+[size_image, ~] = size(average_image);
+[target_size, ~] = size(latmtx);
+delta = target_size/size_image;
+image = average_image;
+% remove sea data
+image(average_image<-100) = NaN;
+block_size = [1/delta, 1/delta]; 
+resized_size = floor(size(image) ./ block_size);
+% Initialize the resized image
+resized_image = zeros(resized_size);
+% in order to preserve coastline take meadian of each block rather than
+% average
+for i = 1:resized_size(1)
+    for j = 1:resized_size(2)
+        % Define the row and column indices for the current block
+        row_range = (1:block_size(1)) + (i-1)*block_size(1);
+        col_range = (1:block_size(2)) + (j-1)*block_size(2);
+        
+        % Extract the current block
+        current_block = image(row_range, col_range);
+        
+        % Compute the median of the block and assign it to the resized image
+        if length(current_block(isnan(current_block)))>length(current_block(~isnan(current_block)))
+            value = NaN;
+        else
+            value = mean(current_block(~isnan(current_block)));
+        end
+        resized_image(i, j) = value;
+    end
+end
+tmean = struct('data', resized_image);
 
 save(filename,'tmean','-append')
 
-%% Precipitation
-
-filenames = {'prec1','prec2','prec3','prec4','prec5','prec6','prec7','prec8','prec9','prec10','prec11','prec12'};
-
-directory = 'data/raw/WorldClim/prec_5m_bil/';
-
-for f = 1:length(filenames)
-
-    % prepare parameters for BIL file import
-    fn = strcat(directory ,filenames{f}, '.bil');
-    hdrfile = strcat(directory, filenames{f}, '.hdr');
-    hdr = importdata(hdrfile, '\t');
-
-
-    for k=1:length(hdr)
-        hdr{k} = regexp(hdr{k},'\s+','split');
-    end
-
-    % import BIL file
-    rowscols = [str2num(hdr{3}{2}) ...
-        str2num(hdr{4}{2}) ...
-        str2num(hdr{5}{2})]; % [NROWS NCOLS NBANDS]
-    precision = strcat('int',hdr{6}{2}); % from NBITS and PIXEL TYPE = int
-    offset = 0; % since the header is not included in this file
-    interleave = 'bil'; % LAYOUT
-    byteorder = 'ieee-le'; % BYTEORDER = I
-    data = multibandread(fn, ...
-        rowscols, precision, offset, interleave, byteorder);
-
-    data(data==-9999) = 0;
-    data = flipud(data);
-
-    % Actual delta
-    delta_x = 1/10;
-    delta_y = 1/10.;
-    [size_x, size_y] = size(data);
-    new_x = round(size_x * delta_x / delta); 
-    new_y = round(size_y * delta_y / delta); 
-
-    data = imresize(data, [new_x, new_y], 'bilinear');
-
-    if f == 1
-        data_all = data;
-    elseif f > 1
-        data_all = data_all + data/length(filenames);
-    end
-end
-
-prec = struct('data', data_all);
-
-save(filename,'prec','-append')
 
 %% Slope and TRI (Nunn and Puga)
 
