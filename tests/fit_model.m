@@ -5,13 +5,13 @@ tic
 t = datetime;
 t.Format = 'yyyy-MM-dd_HH-mm';
 % choose whether to load or start
-load = false;
+load_data = false;
 
 %%
-if load == false
+if load_data == false
 
     number_of_averages = 100;
-    filename = 'generated_data/pinhasi_av_hydro_tmean';
+    filename = 'generated_data/wheat_av_csi';
     filename = filename + string(number_of_averages);
     filename = filename + "_";
     filename = filename + string(t);
@@ -23,11 +23,11 @@ end
 
 %% Load existing run
 
-if load
+if load_data
     % filename
     load(filename);
     
-    load = true;
+    load_data= true;
 end
 
 %% choose geographical layers
@@ -38,19 +38,19 @@ if level < 1
     average_range = [-1.0, 1.0];
     anisotropy_range = [0.0, 0.0];
     % csi
-    csi_range = [0.0, 0.0]; 
+    csi_range = [-2.0, 2.0]; 
     % hydro
-    hydro_range = [-1.0, 1.0];
+    hydro_range = [0.0, 0.0];
     % mean temp 
-    prec_range = [0.0, 0.0];
+    prec_range = [.0, .0];
     % precipitation
-    tmean_range = [-1.0, 1.0];
+    tmean_range = [.0, .0];
 
     ranges = [average_range; anisotropy_range; csi_range; hydro_range; prec_range; tmean_range];
 
     sage_layers = [];
     
-    for i = 0:16,
+    for i = 0:16
         if ismember(i,sage_layers)
             ranges = [ranges; [-2.0 2.0]];
         else
@@ -74,35 +74,8 @@ addpath('src');
  
 if level < 2
 
-    dataset = 'pinhasi';
-
-    if strcmp(dataset,'pinhasi')
-        % load pinhasi
-        pinhasi = readtable( ...
-            'data/raw/pinhasi/Neolithic_timing_Europe_PLOS.xls');
-    
-        pinhasi = pinhasi(pinhasi.Var1 == "SITE",:); %% keep only site rows
-    
-        pinhasi = renamevars(pinhasi, {'Latitude', 'Longitude', 'CALC14BP'}, ...
-            {'lat', 'lon', 'bp'});
-    
-        pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
-        pinhasi.bp = 2000 - pinhasi.bp; % from BP to year
-    
-        x = pinhasi.lat;
-        y = pinhasi.lon;
-        t = pinhasi.bp;
-    
-    elseif strcmp(dataset,'cobo')
-        % LOAD COBO et al
-    
-        cobo = readtable( ...
-             'data/raw/cobo_etal/cobo_etal_data.xlsx');
-    
-        x = cobo.Latitude;
-        y = cobo.Longitude;
-        t = cobo.Est_DateMean_BC_AD_;
-    end
+    dataset = 'all_wheat';
+    [x,y,t] = get_dataset(dataset);
 
     parameters = data_prep(number_of_averages, active_layers, x, y, t);
     
@@ -224,7 +197,7 @@ end
 
 if level < 5
     % parameters = data_prep(number_of_averages, active_layers, x, y, t);
-    factors = [1e4];
+    factors = [1e6];
     all_params = {};
     for factor=factors
     

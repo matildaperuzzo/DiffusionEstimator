@@ -1,7 +1,7 @@
 % save("sweep_1_avg_dt_20.mat", "errors", "terrain_theta", "x_theta", "y_theta",'final_As');
 
-load("norm2.mat")
-% load("pinhasi_sweep_with_exit_flags.mat")
+% load("generated_data/Cobo_objective_functions/pinhasi_av_csi.mat")
+load("all_wheat_av_csi.mat")
 
 [min_error, min_error_idx] = min(all_errors(:));
 [idx_0, idx_1, idx_2] = ind2sub(size(all_errors), min_error_idx);
@@ -27,13 +27,13 @@ if true
     % f = flag_1+flag_2;
     v = [0.2,0.2];
     ind = idx_1;
-    figure(1)
+    figure(2)
     hold on;
     all_errors = squeeze(all_errors);
     h = pcolor(X,Y,all_errors');
     % contour(X,Y,squeeze(f)',v,'ShowText','on')
     colorbar;
-    ylabel("theta_2")
+    ylabel("theta_1")
     xlabel("theta_0")
     % plot point with lowest error in red
     hold on
@@ -41,7 +41,7 @@ if true
     % add text box with error value next to point with white background
     % annotation('textbox', [0.42 0.49 0.1 0.1], 'String', sprintf('error^{1/2} = %f', sqrt(min_error)*dt), 'EdgeColor', 'none', 'BackgroundColor', 'white', 'HorizontalAlignment', 'center', 'FontSize', 14);
     % max_abs_value = max(abs(all_grad(:)));
-    clim([min(all_errors(:)), 5e6]);
+    clim([min(all_errors(:)), 4.2e6]);
     
     % figure(2)
     % % plot magnitude of gradient of error in the first 2 dimensions

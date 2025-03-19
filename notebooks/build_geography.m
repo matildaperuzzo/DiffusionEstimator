@@ -82,6 +82,10 @@ for i = 1:length(time)
     interp_data(:,:,i) = (interp2(old_lon_grid, old_lat_grid, dat, new_lon_grid, new_lat_grid,'spline'));
 end
 
+interp_data_mean = mean(interp_data(:));
+interp_data_std = std(interp_data(:));
+interp_data = (interp_data-interp_data_mean)/interp_data_std;
+
 trace = struct( ...
     'data', interp_data, ...
     'lat', lat, ...
@@ -134,6 +138,7 @@ potveg = struct(...
     'pot_veg_data', pot_veg_data, ...
     'source', 'SAGE Potential Vegetation NetCDF Data');
 
+sea_layer = pot_veg_data{1};
 save(filename, 'potveg', '-append')
 
 
@@ -147,7 +152,7 @@ ncid = netcdf.open(fn, 'WRITE');
 data = netcdf.getVar(ncid,4);
 data = data';
 data = flipud(data);
-
+sea_layer = data>100;
 data(data > 100) = 0;
 
 % Actual delta of SAGE data
@@ -237,6 +242,12 @@ for f = 1:length(filenames)
 end
 
 acc = max(acc,[],3);
+acc(sea_layer) = 0;
+acc(isnan(acc)) = 0;
+acc_mean = mean(acc(~sea_layer));
+acc_std = std(acc(~sea_layer));
+acc = (acc-acc_mean)/acc_std;
+acc(sea_layer) = 0;
 
 acc = struct(...
     'lat', lat, ...
@@ -269,6 +280,11 @@ end
 csidata(csidata < 0) = 0;
 
 csidata = flipud(csidata);
+
+csidata_mean = mean(csidata(~sea_layer));
+csidata_std = std(csidata(~sea_layer));
+csidata = (csidata - csidata_mean)/csidata_std;
+csidata(sea_layer) = 0;
 
 save(filename, 'csidata', '-append')
 
@@ -333,6 +349,13 @@ for i = 1:resized_size(1)
         resized_image(i, j) = value;
     end
 end
+
+resized_image = flipud(resized_image);
+resized_image(isnan(resized_image)) = 0;
+ri_m = mean(resized_image(~sea_layer));
+ri_s = std(resized_image(~sea_layer));
+resized_image = (resized_image-ri_m)/ri_s;
+resized_image(sea_layer) = 0;
 tmean = struct('data', resized_image);
 
 save(filename,'tmean','-append')

@@ -25,9 +25,11 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     axis xy
 
     % color map with A
-    % geoshow(sum(A,3), R, 'DisplayType', 'texturemap')
+    if nargin > 3
+
+        geoshow(A, R, 'DisplayType', 'texturemap')
     %make sea white
-    
+    end
     geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
         'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
 

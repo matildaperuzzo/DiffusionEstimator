@@ -127,7 +127,7 @@ function [exfl1,a] = step(a, theta, X, U, active_layers)
 
     M = F .* M;
 
-    f = find(M); % indices of frontier cells
+    f = find(F); % indices of frontier cells
     U = squeeze(U);
     k = 1;
     probabilities = 1./(1 + exp(-k * (M(f))));

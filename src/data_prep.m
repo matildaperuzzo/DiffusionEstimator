@@ -9,7 +9,7 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
     parameters.dataset_bp = years;
 
     % restrict to Europe/Iran range
-    padding = 5;
+    padding = 1;
     topleft = [max(lats), min(lons)] + [padding -padding];
     bottomright = [min(lats), max(lons)] + [-padding padding];
     % topleft = [60, -17.19];
@@ -47,27 +47,27 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
     X = {};
     if active_layers(3)
         % add csi data
-        csi_mean = mean(csidata(:));
-        csi_std = std(csidata(:));
-        csidata = (csidata-csi_mean)./csi_std;
+        % csi_mean = mean(csidata(:));
+        % csi_std = std(csidata(:));
+        % csidata = (csidata-csi_mean)./csi_std;
         csidata = csidata(latidx,lonidx);
         X{length(X)+1} = csidata;
     end
     if active_layers(4)
         hydro = acc.data;
-        hydro(isnan(hydro)) = 0;
-        hydro_mean = mean(hydro(:));
-        hydro_std = std(hydro(:));
-        hydro = (hydro-hydro_mean)/hydro_std;
+        % hydro(isnan(hydro)) = 0;
+        % hydro_mean = mean(hydro(:));
+        % hydro_std = std(hydro(:));
+        % hydro = (hydro-hydro_mean)/hydro_std;
         hydro = hydro(latidx,lonidx);
         X{length(X)+1} = hydro;
     end
 
     if active_layers(5)
         trace_dat = trace.data;
-        trace_mean = mean(trace_dat(:));
-        trace_std = std(trace_dat(:));
-        trace_dat = (trace_dat - trace_mean)/trace_std;
+        % trace_mean = mean(trace_dat(:));
+        % trace_std = std(trace_dat(:));
+        % trace_dat = (trace_dat - trace_mean)/trace_std;
         time_mask = (trace.time >= parameters.start_time) & (trace.time <= parameters.end_time);
         selected_data = trace_dat(:, :, time_mask);
         trace_dat = mean(selected_data,3);
@@ -77,10 +77,10 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
 
     if active_layers(6)
         tmean = tmean.data;
-        tmean_mean = mean(tmean(~isnan(tmean)));
-        tmean_std = std(tmean(~isnan(tmean)));
-        tmean = (tmean-tmean_mean)/tmean_std;
-        tmean(isnan(tmean)) = 0;
+        % tmean_mean = mean(tmean(~isnan(tmean)));
+        % tmean_std = std(tmean(~isnan(tmean)));
+        % tmean = (tmean-tmean_mean)/tmean_std;
+        % tmean(isnan(tmean)) = 0;
         tmean = tmean(latidx,lonidx);
        
         X{length(X)+1} = tmean;

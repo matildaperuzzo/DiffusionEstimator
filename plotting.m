@@ -261,3 +261,20 @@ for i = 1:length(categories(1,:))-1
     y = parameters.dataset_lon(~isnan(categories(:,i)));
     scatterm(x,y, 20, colors(i,:), 'filled');
 end
+
+%% 
+[size_x, size_y] = size(parameters.X{1});
+lats = linspace(parameters.lat(1),parameters.lat(2),size_x);
+lons = linspace(parameters.lon(1),parameters.lon(2),size_y);
+[X,Y] = meshgrid(lons,lats);
+figure(1)
+p = pcolor(X,Y,parameters.X{1});
+set(p, 'EdgeColor', 'none');
+
+figure(2)
+speeds = theta_optim(1) + theta_optim(2)*parameters.X{1}+ theta_optim(3)*parameters.X{2};
+speeds = 1./(1 + exp(- (speeds)));
+speeds = speeds*110.567/4;
+p = pcolor(X,Y, speeds);
+set(p, 'EdgeColor', 'none');
+clim([0,max(speeds(:))])
