@@ -9,7 +9,7 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
     parameters.dataset_bp = years;
 
     % restrict to Europe/Iran range
-    padding = 1;
+    padding = 5;
     topleft = [max(lats), min(lons)] + [padding -padding];
     bottomright = [min(lats), max(lons)] + [-padding padding];
     % topleft = [60, -17.19];
@@ -45,6 +45,7 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
 
     % create the X vector
     X = {};
+    % csi layer
     if active_layers(3)
         % add csi data
         % csi_mean = mean(csidata(:));
@@ -53,6 +54,8 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
         csidata = csidata(latidx,lonidx);
         X{length(X)+1} = csidata;
     end
+
+    % river layer
     if active_layers(4)
         hydro = acc.data;
         % hydro(isnan(hydro)) = 0;
@@ -63,8 +66,9 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
         X{length(X)+1} = hydro;
     end
 
+    % mean precipitation
     if active_layers(5)
-        trace_dat = trace.data;
+        trace_dat = trace.prec;
         % trace_mean = mean(trace_dat(:));
         % trace_std = std(trace_dat(:));
         % trace_dat = (trace_dat - trace_mean)/trace_std;
@@ -75,26 +79,25 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
         X{length(X)+1} = trace_dat;
     end
 
+    % mean surface temperature
     if active_layers(6)
-        tmean = tmean.data;
-        % tmean_mean = mean(tmean(~isnan(tmean)));
-        % tmean_std = std(tmean(~isnan(tmean)));
-        % tmean = (tmean-tmean_mean)/tmean_std;
-        % tmean(isnan(tmean)) = 0;
-        tmean = tmean(latidx,lonidx);
-       
-        X{length(X)+1} = tmean;
+        % tmean = tmean.data;
+        % trace_dat = tmean;
+        trace_dat = trace.temp;
+        % trace_mean = mean(trace_dat(:));
+        % trace_std = std(trace_dat(:));
+        % trace_dat = (trace_dat - trace_mean)/trace_std;
+        time_mask = (trace.time >= parameters.start_time) & (trace.time <= parameters.end_time);
+        selected_data = trace_dat(:, :, time_mask);
+        trace_dat = mean(selected_data,3);
+        trace_dat = trace_dat(latidx,lonidx);
+        X{length(X)+1} = trace_dat;
     end
 
-
-    if length(active_layers) > 6
-        for i = 7:length(active_layers)
-            if active_layers(i)
-                layer = potveg(i-5).pot_veg_data;
-                layer = layer(latidx,lonidx);
-                X{length(X)+1} = layer;
-            end
-        end
+    if active_layers(7)
+        data = sea.data;
+        data = data(latidx,lonidx);
+        X{length(X)+1} = data;
     end
 
     parameters.X = X;

@@ -11,9 +11,8 @@ load_data = false;
 if load_data == false
 
     number_of_averages = 100;
-    dataset = 'cobo';
-    layers = {'av'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
-    sage_layers = []; % numbers 0 to 16
+    dataset = 'cobo'; %options: 'cobo','pinhasi','all_wheat'
+    layers = {'av','tmean','sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
     directory = 'generated_data/';
     filename = [directory dataset '_'];
     filename = [filename strjoin(layers,'_') '_'];
@@ -75,17 +74,13 @@ if level < 1
         tmean_range = [.0, .0];
     end
 
-    ranges = [average_range; anisotropy_range; csi_range; hydro_range; prec_range; tmean_range];
-
-    sage_layers = [];
-    
-    for i = 0:16
-        if ismember(i,sage_layers)
-            ranges = [ranges; [-2.0 2.0]];
-        else
-            ranges = [ranges; [0.0 0.0]];
-        end
+    if ismember('sea',layers)
+        sea_range = [-1, 1];
+    else
+        sea_range = [0., 0.];
     end
+
+    ranges = [average_range; anisotropy_range; csi_range; hydro_range; prec_range; tmean_range; sea_range];
 
     active_layers = diff(ranges,1,2)>0;
     ranges = ranges(active_layers,:);
@@ -298,11 +293,13 @@ prob_str = sprintf("%s", strip(strip(sprintf("%.2f, ", probabilities), " "),",")
 disp('Probabilities: ['+prob_str+']');
 
 speed_str = sprintf("%s", strip(strip(sprintf("%.2f, ", probabilities*110.567/4), " "),","));
-disp('Speeds (km/decade): ['+prob_str+']');
+disp('Speeds (km/decade): ['+speed_str+']');
 
-plot_map(parameters, final_errors, true)
+disp('Squared error: ' + string(result.squared_error))
+disp('Error in years: ' + string(sqrt(mean(result.squared_error))))
 
 save(filename, "result", '-append')
+plot_map(parameters, final_errors, true)
 
 %% Bootstrapp
 % 

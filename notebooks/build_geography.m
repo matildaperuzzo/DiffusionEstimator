@@ -68,26 +68,36 @@ data_lon(1) = lon(1);
 data_lon(length(data_lon)/2) = lon(end);
 [data_lon, lon_indices] = sort(data_lon);
 time = 2000 + netcdf.getVar(ncid,3)*1000;
+data_temp = netcdf.getVar(ncid,0);
+data_temp = data_temp(lon_indices,:,:);
 
 fn = 'data/raw/trace/TraCE-21K-II.ann.PRECT.nc';
 ncid = netcdf.open(fn);
-data = netcdf.getVar(ncid,1);
-data = data(lon_indices,:,:);
+data_prec = netcdf.getVar(ncid,1);
+data_prec = data_prec(lon_indices,:,:);
 [old_lon_grid, old_lat_grid] = meshgrid(data_lon, data_lat);
 [new_lon_grid, new_lat_grid] = meshgrid(lon, lat);
 
-interp_data = zeros(length(lat), length(lon), length(time));
+interp_data_temp = zeros(length(lat), length(lon), length(time));
+interp_data_prec = zeros(length(lat), length(lon), length(time));
 for i = 1:length(time)
-    dat = data(:,:,i)';
-    interp_data(:,:,i) = (interp2(old_lon_grid, old_lat_grid, dat, new_lon_grid, new_lat_grid,'spline'));
+    dat_t = data_temp(:,:,i)';
+    dat_p = data_prec(:,:,i)';
+    interp_data_temp(:,:,i) = (interp2(old_lon_grid, old_lat_grid, dat_t, new_lon_grid, new_lat_grid,'spline'));
+    interp_data_prec(:,:,i) = (interp2(old_lon_grid, old_lat_grid, dat_p, new_lon_grid, new_lat_grid,'spline'));
 end
 
-interp_data_mean = mean(interp_data(:));
-interp_data_std = std(interp_data(:));
-interp_data = (interp_data-interp_data_mean)/interp_data_std;
+interp_data_mean = mean(interp_data_temp(:));
+interp_data_std = std(interp_data_temp(:));
+interp_data_temp = (interp_data_temp-interp_data_mean)/interp_data_std;
+
+interp_data_mean = mean(interp_data_prec(:));
+interp_data_std = std(interp_data_prec(:));
+interp_data_prec = (interp_data_prec-interp_data_mean)/interp_data_std;
 
 trace = struct( ...
-    'data', interp_data, ...
+    'prec', interp_data_prec, ...
+    'temp', interp_data_temp, ...
     'lat', lat, ...
     'lon', lon, ...
     'time', time);
@@ -95,52 +105,52 @@ trace = struct( ...
 save(filename, 'trace', '-append')
 
 %% SAGE Potential Vegetation NetCDF Data
-
-disp('SAGE Potential Vegetation NetCDF Data')
-
-fn = 'data/raw/SAGE/glpotveg/potveg_nc/vegtype_5min.nc';
-ncid = netcdf.open(fn);
-
-data = netcdf.getVar(ncid,4);
-data = data';
-data = flipud(data);
-data(data > 100) = 0;
-
-% Actual delta of GAEZ data
-delta_act = 1/12;
-
-% Compute latitude and longitude limits
-latlim = [min(lat), max(lat)];
-lonlim = [min(lon), max(lon)];
-
-% Use the limits in georefcells
-R = georefcells(latlim, lonlim, size(data));
-
-if delta ~= delta_act
-    disp("Here");
-    skip = int16(delta/delta_act);
-
-    % data = data(1:skip:end, 1:skip:end);
-end
-
-pot_veg_data = {};
-if delta ~= delta_act
-    for i = 0:16
-        dat = data == i;
-        pot_veg_data{length(pot_veg_data)+1} = imresize(dat, [length(lat) length(lon)]);
-    end
-end
-
-potveg = struct(...
-    'lat', lat, ...
-    'lon', lon, ...
-    'data', data, ...
-    'pot_veg_data', pot_veg_data, ...
-    'source', 'SAGE Potential Vegetation NetCDF Data');
-
-sea_layer = pot_veg_data{1};
-save(filename, 'potveg', '-append')
-
+% 
+% disp('SAGE Potential Vegetation NetCDF Data')
+% 
+% fn = 'data/raw/SAGE/glpotveg/potveg_nc/vegtype_5min.nc';
+% ncid = netcdf.open(fn);
+% 
+% data = netcdf.getVar(ncid,4);
+% data = data';
+% data = flipud(data);
+% data(data > 100) = 0;
+% 
+% % Actual delta of GAEZ data
+% delta_act = 1/12;
+% 
+% % Compute latitude and longitude limits
+% latlim = [min(lat), max(lat)];
+% lonlim = [min(lon), max(lon)];
+% 
+% % Use the limits in georefcells
+% R = georefcells(latlim, lonlim, size(data));
+% 
+% if delta ~= delta_act
+%     disp("Here");
+%     skip = int16(delta/delta_act);
+% 
+%     % data = data(1:skip:end, 1:skip:end);
+% end
+% 
+% pot_veg_data = {};
+% if delta ~= delta_act
+%     for i = 0:16
+%         dat = data == i;
+%         pot_veg_data{length(pot_veg_data)+1} = imresize(dat, [length(lat) length(lon)]);
+%     end
+% end
+% 
+% potveg = struct(...
+%     'lat', lat, ...
+%     'lon', lon, ...
+%     'data', data, ...
+%     'pot_veg_data', pot_veg_data, ...
+%     'source', 'SAGE Potential Vegetation NetCDF Data');
+% 
+% sea_layer = pot_veg_data{1};
+% save(filename, 'potveg', '-append')
+% 
 
 %% SAGE Land Suitability Data
 
@@ -167,10 +177,10 @@ landsuit = struct(...
     'lon', lon, ...
     'data', data, ...
     'source', 'SAGE Land Suitability NetCDF Data');
-
+sea = struct('data', sea_layer);
 %imagesc(lon, lat, flipud(landsuit.data))
 
-save(filename, 'landsuit', '-append')
+save(filename, 'sea', '-append')
 
 
 %% HydroSHEDS ACC (River Flow Accumulation Data)
@@ -289,139 +299,139 @@ csidata(sea_layer) = 0;
 save(filename, 'csidata', '-append')
 
 %% tmean
-
-folder = 'data/raw/wc2.1_30s_tavg'; % Replace with your folder path
-
-% Get a list of all .tif files in the folder
-file_list = dir(fullfile(folder, '*.tif'));
-
-% Check if there are any .tif files in the folder
-if isempty(file_list)
-    error('No .tif files found in the specified folder.');
-end
-
-% Initialize variables
-num_files = length(file_list); % Number of .tif files
-first_image = imread(fullfile(folder, file_list(1).name)); % Read the first image to get dimensions
-image_sum = double(first_image); % Initialize the sum with the first image
-
-% Loop through the remaining files and accumulate the sum
-for i = 2:num_files
-    % Read the current image
-    current_image = imread(fullfile(folder, file_list(i).name));
-    
-    % Add the current image to the sum
-    image_sum = image_sum + double(current_image);
-end
-
-% Compute the average image
-average_image = image_sum / num_files;
-
-% Convert the average image back to the original data type (e.g., uint8)
-average_image = cast(average_image, class(first_image));
-[size_image, ~] = size(average_image);
-[target_size, ~] = size(latmtx);
-delta = target_size/size_image;
-image = average_image;
-% remove sea data
-image(average_image<-100) = NaN;
-block_size = [1/delta, 1/delta]; 
-resized_size = floor(size(image) ./ block_size);
-% Initialize the resized image
-resized_image = zeros(resized_size);
-% in order to preserve coastline take meadian of each block rather than
-% average
-for i = 1:resized_size(1)
-    for j = 1:resized_size(2)
-        % Define the row and column indices for the current block
-        row_range = (1:block_size(1)) + (i-1)*block_size(1);
-        col_range = (1:block_size(2)) + (j-1)*block_size(2);
-        
-        % Extract the current block
-        current_block = image(row_range, col_range);
-        
-        % Compute the median of the block and assign it to the resized image
-        if length(current_block(isnan(current_block)))>length(current_block(~isnan(current_block)))
-            value = NaN;
-        else
-            value = mean(current_block(~isnan(current_block)));
-        end
-        resized_image(i, j) = value;
-    end
-end
-
-resized_image = flipud(resized_image);
-resized_image(isnan(resized_image)) = 0;
-ri_m = mean(resized_image(~sea_layer));
-ri_s = std(resized_image(~sea_layer));
-resized_image = (resized_image-ri_m)/ri_s;
-resized_image(sea_layer) = 0;
-tmean = struct('data', resized_image);
-
-save(filename,'tmean','-append')
-
+% 
+% folder = 'data/raw/wc2.1_30s_tavg'; % Replace with your folder path
+% 
+% % Get a list of all .tif files in the folder
+% file_list = dir(fullfile(folder, '*.tif'));
+% 
+% % Check if there are any .tif files in the folder
+% if isempty(file_list)
+%     error('No .tif files found in the specified folder.');
+% end
+% 
+% % Initialize variables
+% num_files = length(file_list); % Number of .tif files
+% first_image = imread(fullfile(folder, file_list(1).name)); % Read the first image to get dimensions
+% image_sum = double(first_image); % Initialize the sum with the first image
+% 
+% % Loop through the remaining files and accumulate the sum
+% for i = 2:num_files
+%     % Read the current image
+%     current_image = imread(fullfile(folder, file_list(i).name));
+% 
+%     % Add the current image to the sum
+%     image_sum = image_sum + double(current_image);
+% end
+% 
+% % Compute the average image
+% average_image = image_sum / num_files;
+% 
+% % Convert the average image back to the original data type (e.g., uint8)
+% average_image = cast(average_image, class(first_image));
+% [size_image, ~] = size(average_image);
+% [target_size, ~] = size(latmtx);
+% delta = target_size/size_image;
+% image = average_image;
+% % remove sea data
+% image(average_image<-100) = NaN;
+% block_size = [1/delta, 1/delta]; 
+% resized_size = floor(size(image) ./ block_size);
+% % Initialize the resized image
+% resized_image = zeros(resized_size);
+% % in order to preserve coastline take meadian of each block rather than
+% % average
+% for i = 1:resized_size(1)
+%     for j = 1:resized_size(2)
+%         % Define the row and column indices for the current block
+%         row_range = (1:block_size(1)) + (i-1)*block_size(1);
+%         col_range = (1:block_size(2)) + (j-1)*block_size(2);
+% 
+%         % Extract the current block
+%         current_block = image(row_range, col_range);
+% 
+%         % Compute the median of the block and assign it to the resized image
+%         if length(current_block(isnan(current_block)))>length(current_block(~isnan(current_block)))
+%             value = NaN;
+%         else
+%             value = mean(current_block(~isnan(current_block)));
+%         end
+%         resized_image(i, j) = value;
+%     end
+% end
+% 
+% resized_image = flipud(resized_image);
+% resized_image(isnan(resized_image)) = 0;
+% ri_m = mean(resized_image(~sea_layer));
+% ri_s = std(resized_image(~sea_layer));
+% resized_image = (resized_image-ri_m)/ri_s;
+% resized_image(sea_layer) = 0;
+% tmean = struct('data', resized_image);
+% 
+% save(filename,'tmean','-append')
+% 
 
 %% Slope and TRI (Nunn and Puga)
-
-disp('Slope and TRI (Nunn and Puga)')
-
-fn = '../OOS/data/original_data/Nunn_Puga';
-
-tic
-
-slope = dlmread(strcat(fn, '/slope.txt'), ' ', 6, 1);
-tri = dlmread(strcat(fn, '/tri.txt'), ' ', 6, 1);
-
-
-% Actual delta of GAEZ data
-delta_act = 1/120;
-
-if delta ~= delta_act
-    slope = flipud(resizem(slope, [length(lat) length(lon)]));
-    tri = flipud(resizem(tri, [length(lat) length(lon)]));
-end
-
-save('data/prep/geography.mat', 'slope', 'tri', '-append')
-
-clearvars -except delta lat lon latmxt lonmtx
-
-toc
-
-
-%% GSHHS shoreline
-
-disp('GSHHS')
-
-tic
-
-filename = 'original_data/GSHHG/gshhg-shp-2.2.2/GSHHS_shp/c/GSHHS_c_L1';
-
-coast = shaperead(['../OOS/data/' filename]);
-
-% merge structure elements to vectors of lon and lat coordinates
-coastlonvec = [];
-coastlatvec = [];
-
-for i = 1:length(coast)
-    coastlonvec = [coastlonvec coast(i).X];
-    coastlatvec = [coastlatvec coast(i).Y];
-end
-
-[coastmtx, R] = vec2mtx(coastlatvec, coastlonvec, ...
-    1/delta, [-90 90], [-180 180], 'filled');
-
-coastmtx = coastmtx == 1;
-
-coast = struct(...
-    'lat', -lat, ...
-    'lon', lon, ...
-    'density', 1/delta, ...
-    'data', coastmtx, ...
-    'source', 'GSHHS shoreline data');
-
-save('data/prep/geography.mat', 'coast', '-append')
-
-clearvars -except delta lat lon latmxt lonmtx
+% 
+% disp('Slope and TRI (Nunn and Puga)')
+% 
+% fn = '../OOS/data/original_data/Nunn_Puga';
+% 
+% tic
+% 
+% slope = dlmread(strcat(fn, '/slope.txt'), ' ', 6, 1);
+% tri = dlmread(strcat(fn, '/tri.txt'), ' ', 6, 1);
+% 
+% 
+% % Actual delta of GAEZ data
+% delta_act = 1/120;
+% 
+% if delta ~= delta_act
+%     slope = flipud(resizem(slope, [length(lat) length(lon)]));
+%     tri = flipud(resizem(tri, [length(lat) length(lon)]));
+% end
+% 
+% save('data/prep/geography.mat', 'slope', 'tri', '-append')
+% 
+% clearvars -except delta lat lon latmxt lonmtx
+% 
+% toc
+% 
+% 
+% %% GSHHS shoreline
+% 
+% disp('GSHHS')
+% 
+% tic
+% 
+% filename = 'original_data/GSHHG/gshhg-shp-2.2.2/GSHHS_shp/c/GSHHS_c_L1';
+% 
+% coast = shaperead(['../OOS/data/' filename]);
+% 
+% % merge structure elements to vectors of lon and lat coordinates
+% coastlonvec = [];
+% coastlatvec = [];
+% 
+% for i = 1:length(coast)
+%     coastlonvec = [coastlonvec coast(i).X];
+%     coastlatvec = [coastlatvec coast(i).Y];
+% end
+% 
+% [coastmtx, R] = vec2mtx(coastlatvec, coastlonvec, ...
+%     1/delta, [-90 90], [-180 180], 'filled');
+% 
+% coastmtx = coastmtx == 1;
+% 
+% coast = struct(...
+%     'lat', -lat, ...
+%     'lon', lon, ...
+%     'density', 1/delta, ...
+%     'data', coastmtx, ...
+%     'source', 'GSHHS shoreline data');
+% 
+% save('data/prep/geography.mat', 'coast', '-append')
+% 
+% clearvars -except delta lat lon latmxt lonmtx
 
 
 disp('Building geography finished!')

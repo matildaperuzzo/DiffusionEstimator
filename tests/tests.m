@@ -1,7 +1,7 @@
 % save("sweep_1_avg_dt_20.mat", "errors", "terrain_theta", "x_theta", "y_theta",'final_As');
 
 % load("generated_data/Cobo_objective_functions/pinhasi_av_csi.mat")
-load("all_wheat_av_csi.mat")
+load("cobo_av_tmean.mat")
 
 [min_error, min_error_idx] = min(all_errors(:));
 [idx_0, idx_1, idx_2] = ind2sub(size(all_errors), min_error_idx);
@@ -41,7 +41,7 @@ if true
     % add text box with error value next to point with white background
     % annotation('textbox', [0.42 0.49 0.1 0.1], 'String', sprintf('error^{1/2} = %f', sqrt(min_error)*dt), 'EdgeColor', 'none', 'BackgroundColor', 'white', 'HorizontalAlignment', 'center', 'FontSize', 14);
     % max_abs_value = max(abs(all_grad(:)));
-    clim([min(all_errors(:)), 4.2e6]);
+    clim([min(all_errors(:)), 2.1e6]);
     
     % figure(2)
     % % plot magnitude of gradient of error in the first 2 dimensions
