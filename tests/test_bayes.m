@@ -29,7 +29,7 @@ if true
         {'lat', 'lon', 'bp'});
 
     pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
-    pinhasi.bp = 2000 - pinhasi.bp; % from BP to year
+    pinhasi.bp = 1950 - pinhasi.bp; % from BP to year
     idx = find(pinhasi.bp == min(pinhasi.bp));
 
     % restrict to Europe/Iran range

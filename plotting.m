@@ -1,5 +1,5 @@
 directory = 'generated_data/';
-
+addpath("src")
 
 function recentIdx = findMostRecentDateStruct(structArray)
     % Convert all date strings to datetime objects
@@ -127,7 +127,7 @@ for idx1 = 1:length(all_layers)
 end
 sq_errors = 1 - sq_errs/av_sq_err;
 save("generated_data\filename_database.mat", "database")
-%%
+
 sq_errors(2,1) = sq_errors(1,2);
 colormap pink
 imagesc(sq_errors)

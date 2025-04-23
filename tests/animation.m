@@ -17,7 +17,7 @@ active_layers = [1 0 1 1 0];
 %     {'lat', 'lon', 'bp'});
 % 
 % pinhasi = pinhasi(:,{'lat', 'lon', 'bp'});
-% pinhasi.bp = 2000 - pinhasi.bp; % from BP to year
+% pinhasi.bp = 1950 - pinhasi.bp; % from BP to year
 % 
 % parameters = data_prep(1, active_layers, pinhasi.lat, pinhasi.lon, pinhasi.bp);
 cobo = readtable( ...

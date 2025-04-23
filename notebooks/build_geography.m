@@ -67,7 +67,7 @@ data_lon(data_lon>180) = data_lon(data_lon>180)-360;
 data_lon(1) = lon(1);
 data_lon(length(data_lon)/2) = lon(end);
 [data_lon, lon_indices] = sort(data_lon);
-time = 2000 + netcdf.getVar(ncid,3)*1000;
+time = 1950 + netcdf.getVar(ncid,3)*1000;
 data_temp = netcdf.getVar(ncid,0);
 data_temp = data_temp(lon_indices,:,:);
 

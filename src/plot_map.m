@@ -13,8 +13,7 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     loc = 10;
     fwidth = 20;
     tic
-    f = figure('Units','inches','Position',[loc loc fwidth fwidth/2.2], ...
-    'PaperPosition',[.25 .25 8 6]);
+    f = figure(1);
     hold on;
 
     latlim = parameters.lat;
@@ -33,7 +32,7 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
         'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
 
-    framem('FLineWidth', 1, 'FontSize', 7)
+    framem('FLineWidth', 1, 'FontSize', 4)
     [size_x size_y size_t] = size(A);
     predictions = size_t - pinhasi_active(:,3);
     
@@ -53,9 +52,13 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     colormap(cmap)
 
     % Loop over each point and plot with the corresponding color
-    scatterm(parameters.dataset_lat, parameters.dataset_lon, 20, errors, 'filled');
+    s = scatterm(parameters.dataset_lat, parameters.dataset_lon, 5, errors, 'filled');
     cb = colorbar;
-    ylabel(cb,'t_{data} - t_{sim}','FontSize',16);
+    cb.FontSize = 8;
+    set(cb,'TickLabelInterpreter','latex','FontSize',6)
+    ylabel(cb,'$t_{data} - t_{sim}$','FontSize',8,'Interpreter','latex');
+
+
     max_abs_value = max(abs(errors(:)));
 
     if nargin > 2
