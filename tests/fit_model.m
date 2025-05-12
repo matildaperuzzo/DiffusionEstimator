@@ -14,8 +14,8 @@ get_errors = false;
 if load_data == false
 
     number_of_averages = 100;
-    dataset = 'cobo'; %options: 'cobo','pinhasi','all_wheat'
-    layers = {'av','prec'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
+    dataset = 'maize'; %options: 'cobo','pinhasi','all_wheat'
+    layers = {'av','csi','sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
     directory = 'generated_data/';
 
     %create filename
@@ -135,15 +135,15 @@ end
 
 %% add additional layers
 
-active_layers = [active_layers 1];
-parameters.active_layers = active_layers;
-ranges = [ranges; [-2 2]];
-temp_params = data_prep(1, [0 0 0 0 1 0 1], x, y, t);
-new_layer = temp_params.X{1}.*temp_params.X{2};
-
-% remove sea from prec layer
-parameters.X{1} = parameters.X{1}.*(1-temp_params.X{2});
-parameters.X{2} = new_layer;
+% active_layers = [active_layers 1];
+% parameters.active_layers = active_layers;
+% ranges = [ranges; [-2 2]];
+% temp_params = data_prep(1, [0 0 0 0 1 0 1], x, y, t);
+% new_layer = temp_params.X{1}.*temp_params.X{2};
+% 
+% % remove sea from prec layer
+% parameters.X{1} = parameters.X{1}.*(1-temp_params.X{2});
+% parameters.X{2} = new_layer;
 
 %% check speeds
     
@@ -281,7 +281,7 @@ disp('Speeds (km/decade): ['+speed_str+']');
 disp('Squared error: ' + string(result.squared_error))
 disp('Error in years: ' + string(sqrt(mean(result.squared_error))))
 
-% save(filename, "result", '-append')
+save(filename, "result", '-append')
 
 plot_map(parameters, final_errors, true)
 

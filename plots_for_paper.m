@@ -56,11 +56,12 @@ land = shaperead('landareas.shp', 'UseGeoCoords', true);
 
 R = georefcells(parameters.lat, parameters.lon, ...
     size(parameters.X{1}));
-
+set(0, 'DefaultFigureRenderer', 'zbuffer'); %// this line added
+set(0, 'defaulttextinterpreter', 'latex');
 tic
 f = figure (1);
 set(gcf, 'Color', 'White')
-f.Position = [100 100 900 400];
+f.Position = [100 100 300 150];
 % subplot(1,2,2)
 hold on;
 
@@ -70,7 +71,6 @@ lonlim = parameters.lon;
 worldmap(latlim, lonlim)
 colormap(pepper)
 
-title("Rice dataset", "FontSize", 12)
 c = colorbar;
 ylabel(c,'Year','FontSize',12);
 axis xy
@@ -79,8 +79,6 @@ axis xy
 
 geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
     'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
-
-framem('FLineWidth', 1, 'FontSize', 7)
 
 scatterm(parameters.dataset_lat, parameters.dataset_lon, 5, parameters.times(parameters.dataset_idx(:,3)), 'filled');
 
@@ -98,7 +96,6 @@ R = georefcells(parameters.lat, parameters.lon, ...
 loc = 10;
 fwidth = 20;
 tic
-subplot(1,2,1)
 
 hold on;
 
@@ -108,20 +105,25 @@ lonlim = parameters.lon;
 worldmap(latlim, lonlim)
 colormap(pepper)
 
-title("Wheat dataset", "FontSize", 12)
-c = colorbar;
-ylabel(c,'Year','FontSize',12);
 axis xy
 
+cb = colorbar;
+cb.FontSize = 8;
+set(cb,'TickLabelInterpreter','latex','FontSize',6)
+ylabel(cb,'Year of arrival','FontSize',8,'Interpreter','latex');
 %make sea white
 
 geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
     'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
+framem('FLineWidth', 1, 'FontSize', 4)
+scatterm(parameters.dataset_lat, parameters.dataset_lon, 3, parameters.times(parameters.dataset_idx(:,3)), 'filled');
 
-framem('FLineWidth', 1, 'FontSize', 7)
+saveas(gcf, 'saved_plots/Diffusive_data.pdf')
 
-scatterm(parameters.dataset_lat, parameters.dataset_lon, 5, parameters.times(parameters.dataset_idx(:,3)), 'filled');
-print(f, 'saved_plots/Diffusive_data.pdf', '-depsc')
+%%
+
+plot_map(parameters, parameters.dataset_bp, false)
+colormap(pepper)
 
 %% Model figure plots
 
@@ -129,7 +131,7 @@ addpath('src');
 addpath("generated_data\")
 %%
 [x,y,t] = get_dataset("all_wheat");
-active_layers = [0 0 0 0 0 1 0 0]; %prec
+active_layers = [0 0 0 0 1 0 0 0]; %prec
 parameters = data_prep(1, active_layers, x, y, t);
 %%
 [nx,ny] = size(parameters.X{1});
@@ -151,9 +153,10 @@ ax = gca;
 ax.FontSize = 16; 
 xlabel("Latitude", 'Rotation', -25, "FontSize",16)
 ylabel("Longitude", 'Rotation', 25, "FontSize",16)
-zlabel("Mean temperature", "FontSize",16)
+zlabel("Precipitation", "FontSize",16)
 grid off
-saveas(gcf,"saved_plots/tmean_layer.pdf")
+set(gca,"TickLabelInterpreter",'latex')
+saveas(gcf,"saved_plots/prec_layer.pdf")
 
 %% %% Plot objective function
 load("model_plot_sweep_small.mat")
@@ -193,43 +196,48 @@ saveas(gcf,"saved_plots/Obj_func.pdf")
 %% Bar chart results plot
 addpath("src")
 
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\filename_database.mat')
+load('generated_data\filename_database.mat')
 
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
+load('generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
 labels_w = {};
 labels_w{1} = "av";
 sq_errors_w = [result.squared_error];
-yr_errors_w = [sqrt(result.squared_error)];
-sq_errorbar_w = [0];
+yr_errors_w = [mean(spread_errors_boot)];
+yr_errorbar_w = [std(spread_errors_boot)];
 
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\cobo_av100_2025-03-10_14-02.mat')
+load('generated_data\cobo_av_100av_2025-03-31_15-55.mat')
 result = run_model(parameters, theta_optim);
 labels_r = {};
 labels_r{1} = "av";
 sq_errors_r = [result.squared_error];
-yr_errors_r = [sqrt(result.squared_error)];
-sq_errorbar_r = [0];
+yr_errors_r = [mean(spread_errors_boot)];
+yr_errorbar_r = [std(spread_errors_boot)];
 
 for i=1:length(database)
     if (length(database{i}.layers) == 2)
         if ~all(ismember('sea', database{i}.layers{2}))
             continue
         end
+    elseif (length(database{i}.layers) == 1)
+        if database{i}.layers(1) ~= "sea"
+            continue
+        end
     end
-    if (length(database{i}.layers) == 2) & ismember('wheat', database{i}.dataset)
+    
+    if ismember('wheat', database{i}.dataset)
         disp(database{i}.layers)
         labels_w{length(labels_w)+1} = database{i}.layers{1};
         load(database{i}.file)
         sq_errors_w = [sq_errors_w result.squared_error];
-        yr_errors_w = [yr_errors_w mean(spread_errors_shuffle)];
-        sq_errorbar_w = [sq_errorbar_w std(spread_errors_shuffle)];
-    elseif (length(database{i}.layers) == 2) & ismember('rice', database{i}.dataset)
+        yr_errors_w = [yr_errors_w mean(spread_errors_boot)];
+        yr_errorbar_w = [yr_errorbar_w std(spread_errors_boot)];
+    elseif ismember('rice', database{i}.dataset)
         disp(database{i}.layers)
         labels_r{length(labels_r)+1} = database{i}.layers{1};
         load(database{i}.file)
         sq_errors_r = [sq_errors_r result.squared_error];
-        yr_errors_r = [yr_errors_r mean(spread_errors_shuffle)];
-        sq_errorbar_r = [sq_errorbar_r std(spread_errors_shuffle)];
+        yr_errors_r = [yr_errors_r mean(spread_errors_boot)];
+        yr_errorbar_r = [yr_errorbar_r std(spread_errors_boot)];
     end
 end
 
@@ -239,33 +247,33 @@ w_idx = fliplr(w_idx);
 
 yr_errors = [yr_errors_w(w_idx); yr_errors_r(w_idx)];
 sq_errors = [sq_errors_w(w_idx); sq_errors_r(w_idx)];
-sq_errorbar = [sq_errorbar_w(w_idx); sq_errorbar_r(w_idx)];
+yr_errorbar = [spread_errors_boot(w_idx); spread_errors_boot(w_idx)];
 
 %%
 
 f = figure(1);
 f.Position = [100 100 400 300];
 hold on
-b2 = bar([0 1], sq_errors/1e6);
+b2 = bar([0 1], yr_errors/1e3);
 % set(gca,'XTickLabel', {"wheat", "rice"})
 
-x_errorbar = [-2 -1 0 1 2].*0.15;
-% e1 = errorbar(x_errorbar, sq_errors_w(w_idx)/1e6,sq_errorbar_w/1e6, "LineStyle","none", 'CapSize',12, 'Color', 'k', "LineWidth",1);
-% e2 = errorbar(x_errorbar + 1, sq_errors_r(w_idx)/1e6,sq_errorbar_r/1e6, "LineStyle","none", 'CapSize',12, 'Color', 'k', "LineWidth",1);
+x_errorbar = [-3 -2 -1 0 1 2 3].*0.115;
+e1 = errorbar(x_errorbar, yr_errors_w(w_idx)/1e3,yr_errorbar_w/1e3, "LineStyle","none", 'CapSize',10, 'Color', 'k', "LineWidth",1);
+e2 = errorbar(x_errorbar + 1, yr_errors_r(w_idx)/1e3,yr_errorbar_r/1e3, "LineStyle","none", 'CapSize',10, 'Color', 'k', "LineWidth",1);
 xticks([0 1])
 xticklabels({"wheat", "rice"})
 cmap = pepper(1:end-60,:);
-ylim([0, 3.2])
+% ylim([0, 3.2])
 
-layer_names = {"",'asymmetry','crop suitability','river size','precipitation','mean temperature'};
+layer_names = {"baseline",'asymmetry','crop suitability','river size','precipitation','mean temperature','sea'};
 for k = 1:length(yr_errors_r)
     b2(k).FaceColor = cmap(int16((k)*length(cmap)/(length(yr_errors_r)+1)),:);
     xpos = b2(k).XEndPoints;  % Get x-position of bars
     ypos = b2(k).YEndPoints+0.02;  % Get y-position of bars
-    text(xpos, ypos, layer_names{w_idx(k)}, ...
-        'HorizontalAlignment', 'left', ...
-        'VerticalAlignment', 'middle', ...
-        'FontSize', 8,'Interpreter','latex','Rotation',90);
+    % text(xpos, ypos, layer_names{w_idx(k)}, ...
+    %     'HorizontalAlignment', 'left', ...
+    %     'VerticalAlignment', 'middle', ...
+    %     'FontSize', 8,'Interpreter','latex','Rotation',90);
     text(xpos, zeros(size(xpos))+0.05, layer_names{w_idx(k)}, ...
         'HorizontalAlignment', 'left', ...
         'VerticalAlignment', 'middle', ...
@@ -280,43 +288,37 @@ set(gcf, 'Color', 'White', 'Alphamap',0)
 saveas(gcf,"saved_plots/results_bar_chart.pdf")
 
 %% horizontal bar chart
-w_idx = fliplr(w_idx);
-
 f = figure(1);
 f.Position = [100 100 800 180];
 tiledlayout(1,2, 'Padding', 'none', 'TileSpacing', 'compact'); 
 for p = 1:2
     nexttile    
     hold on
-    b2 = barh([0], fliplr(sq_errors(p,:))/1e6);
+    b2 = barh([0], fliplr(yr_errors(p,:))/1e3);
     cmap = pepper(end-60:-1:1,:);
+    yticks([])
+    ylabel({"Geographical layer"},'Interpreter','latex', "FontSize",8, 'Rotation',90)
     if p == 1
-        yticks([])
-        ylabel({"layer"},'Interpreter','latex', "FontSize",8, 'Rotation',90)
         title("Wheat",'Interpreter','latex')
+        e1 = errorbar(yr_errors_w(fliplr(w_idx))/1e3, x_errorbar,yr_errorbar_w(fliplr(w_idx))/1e3, 'horizontal', "LineStyle","none", 'CapSize',8, 'Color', 'k', "LineWidth",1);
     elseif p == 2
-        yticks([])
-        ylabel({"layer"},'Interpreter','latex', "FontSize",8, 'Rotation',90)
         title("Rice",'Interpreter','latex')
+        e2 = errorbar(yr_errors_r(fliplr(w_idx))/1e3, x_errorbar,yr_errorbar_r(fliplr(w_idx))/1e3, 'horizontal', "LineStyle","none", 'CapSize',8, 'Color', 'k', "LineWidth",1);
     end
     
     % Gradient coloring
     
-    layer_names = {"baseline",'asymmetry','crop suitability','river size','precipitation','mean temperature'};
+    layer_names = {"Baseline",'Anisotropy','Crop suitability','River size','Precipitation','Mean temperature',"Sea only"};
     for k = 1:length(yr_errors_r)
         b2(k).FaceColor = cmap(int16((k)*length(cmap)/(length(yr_errors_r)+1)),:);
         ypos = b2(k).XEndPoints;  % Get x-position of bars
         xpos = b2(k).YEndPoints+0.02;  % Get y-position of bars
-        % text(xpos, ypos, layer_names{w_idx(k)}, ...
-        %     'HorizontalAlignment', 'left', ...
-        %     'VerticalAlignment', 'middle', ...
-        %     'FontSize', 8,'Interpreter','latex','Rotation',0);
-        text(zeros(size(ypos))+0.05, ypos, layer_names{w_idx(k)}, ...
+        text(zeros(size(ypos))+0.02, ypos, layer_names{w_idx(length(yr_errors_r)-k+1)}, ...
             'HorizontalAlignment', 'left', ...
             'VerticalAlignment', 'middle', ...
             'FontSize', 8,'Interpreter','latex','Rotation',0, 'Color','w');
     end 
-    xlabel("Obj. Function","FontSize", 8,'Interpreter','latex')
+    xlabel("Average error (kyears)","FontSize", 8,'Interpreter','latex')
     set(gca,"TickLabelInterpreter",'latex')
     grid on
 end
@@ -351,76 +353,76 @@ f.Position = [100 100 800 300];
 tiledlayout(2,2, 'Padding', 'none', 'TileSpacing', 'compact'); 
 
 nexttile
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
+load('generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
 [x,y,colors] = get_plot_coords(parameters, result);
 hold on;
 for i = 1:length(x)
-    line([x(i), x(i)], [0, y(i)], 'Color', colors(i, :), 'LineWidth', 1);
+    line([x(i), x(i)], [0, y(i)/1e3], 'Color', colors(i, :), 'LineWidth', 0.5);
 end
 % Plot the points with color corresponding to y-values
-s = scatter(x, y, 5, colors, 'filled'); % 100 is the marker size, adjust as needed
-ylim([-5000,5000])
+s = scatter(x, y/1e3, 5, colors, 'filled'); % 100 is the marker size, adjust as needed
+ylim([-5,5])
 xlabel("Year",'Interpreter','latex', 'FontSize',8)
-ylabel("Error (years)",'Interpreter','latex', 'FontSize',8)
+ylabel("Error (kyears)",'Interpreter','latex', 'FontSize',8)
 title("Wheat - baseline",'Interpreter','latex', 'FontSize',10)
 set(gca,"TickLabelInterpreter",'latex')
 grid on
-yticks([-5000,-2500,0,2500,5000])
+yticks([-5,-2.5,0,2.5,5])
 
 nexttile
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\cobo_av_100av_2025-03-24_10-59.mat')
+load('generated_data\cobo_av_100av_2025-03-31_15-55.mat')
 [x,y,colors] = get_plot_coords(parameters, result);
 hold on;
 for i = 1:length(x)
-    line([x(i), x(i)], [0, y(i)], 'Color', colors(i, :), 'LineWidth', 1);
+    line([x(i), x(i)], [0, y(i)/1e3], 'Color', colors(i, :), 'LineWidth', 0.5);
 end
 
 % Plot the points with color corresponding to y-values
-s = scatter(x, y, 5, colors, 'filled'); % 100 is the marker size, adjust as needed
-ylim([-5000,5000])
+s = scatter(x, y/1e3, 5, colors, 'filled'); % 100 is the marker size, adjust as needed
+ylim([-5,5])
 xlabel("Year",'Interpreter','latex', 'FontSize',8)
-ylabel("Error (years)",'Interpreter','latex', 'FontSize',8)
+ylabel("Error (kyears)",'Interpreter','latex', 'FontSize',8)
 title("Rice - baseline",'Interpreter','latex', 'FontSize',10)
 set(gca,"TickLabelInterpreter",'latex')
 grid on
-yticks([-5000,-2500,0,2500,5000])
+yticks([-5,-2.5,0,2.5,5])
 nexttile
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\all_wheat_av_prec_sea_100av_2025-03-28_14-02.mat')
+load('generated_data\all_wheat_av_prec_sea_100av_2025-03-28_14-02.mat')
 [x,y,colors] = get_plot_coords(parameters, result);
 hold on;
 for i = 1:length(x)
-    line([x(i), x(i)], [0, y(i)], 'Color', colors(i, :), 'LineWidth', 1);
+    line([x(i), x(i)], [0, y(i)/1e3], 'Color', colors(i, :), 'LineWidth', 0.5);
 end
 
 % Plot the points with color corresponding to y-values
-s = scatter(x, y, 5, colors, 'filled'); % 100 is the marker size, adjust as needed
-ylim([-5000,5000])
+s = scatter(x, y/1e3, 5, colors, 'filled'); % 100 is the marker size, adjust as needed
+ylim([-5,5])
 xlabel("Year",'Interpreter','latex', 'FontSize',8)
-ylabel("Error (years)",'Interpreter','latex', 'FontSize',8)
+ylabel("Error (kyears)",'Interpreter','latex', 'FontSize',8)
 title("Wheat - sea and precipitation",'Interpreter','latex', 'FontSize',10)
 set(gca,"TickLabelInterpreter",'latex')
 grid on
-yticks([-5000,-2500,0,2500,5000])
+yticks([-5,-2.5,0,2.5,5])
 
 nexttile
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\cobo_av_prec_sea_100av_2025-03-28_14-04.mat')
+load('generated_data\cobo_av_prec_sea_100av_2025-03-28_14-04.mat')
 [x,y,colors] = get_plot_coords(parameters, result);
 hold on;
 for i = 1:length(x)
-    line([x(i), x(i)], [0, y(i)], 'Color', colors(i, :), 'LineWidth', 1);
+    line([x(i), x(i)], [0, y(i)/1e3], 'Color', colors(i, :), 'LineWidth', 0.5);
 end
 
 % Plot the points with color corresponding to y-values
-s = scatter(x, y, 5, colors, 'filled'); % 100 is the marker size, adjust as needed
-ylim([-5000,5000])
+s = scatter(x, y/1e3, 5, colors, 'filled'); % 100 is the marker size, adjust as needed
+ylim([-5,5])
 xlabel("Year",'Interpreter','latex', 'FontSize',8)
-ylabel("Error (years)",'Interpreter','latex', 'FontSize',8)
+ylabel("Error (kyears)",'Interpreter','latex', 'FontSize',8)
 title("Rice - sea and precipitation",'Interpreter','latex', 'FontSize',10)
 
 set(gca,"TickLabelInterpreter",'latex')
 set(gcf, 'Color', 'White', 'Alphamap',0)
 grid on
-yticks([-5000,-2500,0,2500,5000])
+yticks([-5,-2.5,0,2.5,5])
 
 saveas(gcf,"saved_plots/results_error_plots.pdf")
 
@@ -431,7 +433,7 @@ f.Position = [100 100 800 200];
 tiledlayout(1,2, 'Padding', 'none', 'TileSpacing', 'compact'); 
 
 nexttile
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\all_wheat_av_prec_sea_100av_2025-03-28_14-02.mat')
+load('generated_data\all_wheat_av_prec_sea_100av_2025-03-28_14-02.mat')
 simulation = parameters.end_time - mean(result.A, 3)*(parameters.end_time-parameters.start_time);
 [~, ~, t_max] = size(result.A);
 plot_map(parameters, parameters.dataset_bp, false, simulation);
@@ -439,7 +441,7 @@ colormap(pepper)
 title("Wheat - sea and precipitation",'Interpreter','latex')
 
 nexttile
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\cobo_av_prec_sea_100av_2025-03-28_14-04.mat')
+load('generated_data\cobo_av_prec_sea_100av_2025-03-28_14-04.mat')
 simulation = parameters.end_time - mean(result.A, 3)*(parameters.end_time-parameters.start_time);
 [~, ~, t_max] = size(result.A);
 plot_map(parameters, parameters.dataset_bp, false, simulation);
@@ -451,7 +453,7 @@ set(gcf, 'Color', 'White', 'Alphamap',0)
 saveas(gcf,"saved_plots/maps_and_errors.pdf")
 
 
-%% 
+%% dist vs time
 
 custom_colors = [0 0 0;      
                 0.5 0.5 0.5;  
@@ -459,7 +461,7 @@ custom_colors = [0 0 0;
 size_pt = 7;
 subplot(2,1,1)
 hold on
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
+load('generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
 [min_time, min_time_idx] = min(parameters.dataset_bp);
 
 
@@ -481,7 +483,7 @@ s2 = line(A,B);
 s2.LineWidth = 2;
 s2.Color = custom_colors(2,:);
 
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\all_wheat_av_prec_sea_100av_2025-03-28_14-02.mat')
+load('generated_data\all_wheat_av_prec_sea_100av_2025-03-28_14-02.mat')
 simulation_times = parameters.start_time - result.times/t_max*(parameters.start_time-parameters.end_time);
 s3 = scatter(simulation_times, dist_km, 'filled');
 s3.MarkerFaceColor = custom_colors(3,:);
@@ -502,11 +504,11 @@ title("Wheat", "FontSize",14,'Interpreter','latex')
 ylim([-1000,7000])
 set(gca,"TickLabelInterpreter",'latex')
 
-%%
+
 subplot(2,1,2)
 
 hold on
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\cobo_av_100av_2025-03-24_10-59.mat')
+load('generated_data\cobo_av_100av_2025-03-31_15-55.mat')
 [min_time, min_time_idx] = min(parameters.dataset_bp);
 dist = sqrt((parameters.dataset_lat-parameters.dataset_lat(min_time_idx)).^2 + (parameters.dataset_lon-parameters.dataset_lon(min_time_idx)).^2);
 dist_km = deg2km(dist);
@@ -527,11 +529,15 @@ s2 = line(A,B);
 s2.LineWidth = 2;
 s2.Color = custom_colors(2,:);
 
-second_dist = dist_km;
-second_dist(second_dist<4250) = nan;
-second_times = simulation_times;
-second_times(second_dist<4250) = nan;
-[min_time, min_time_idx] = min(second_dist);
+pt = scatter([A(1)],[B(1)]);
+pt.SizeData = 200;
+pt.LineWidth = 1.5;
+pt.MarkerEdgeColor = 'k';
+text(A(1) + 150,B(1) + 1000, "origin 1",'HorizontalAlignment', 'center', 'Interpreter','latex','FontSize', 8)
+
+second_dist = dist_km(dist_km>4000);
+second_times = simulation_times(dist_km>4000);
+[min_time, min_time_idx] = min(second_times);
 [max_time, max_time_idx] = max(second_dist);
 A2= [second_times(min_time_idx) second_times(max_time_idx)];
 B2=[second_dist(min_time_idx) second_dist(max_time_idx)];
@@ -539,19 +545,83 @@ s22 = line(A2,B2);
 s22.LineWidth = 2;
 s22.Color = custom_colors(2,:);
 
+pt = scatter([A2(1)],[B2(1)]);
+pt.SizeData = 200;
+pt.LineWidth = 1.5;
+pt.MarkerEdgeColor = 'k';
+text(A2(1)-200,B2(1) + 1000, "origin 2",'HorizontalAlignment', 'center', 'Interpreter','latex','FontSize', 8)
 
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\cobo_av_prec_sea_100av_2025-03-28_14-04.mat')
+ylim([-1000, 7000])
+
+load('generated_data\cobo_av_prec_sea_100av_2025-03-28_14-04.mat')
 simulation_times = parameters.start_time - result.times/t_max*(parameters.start_time-parameters.end_time);
 s3 = scatter(simulation_times, dist_km, 'filled');
 s3.MarkerFaceColor = custom_colors(3,:);
 s3.SizeData = size_pt;
 s3.MarkerFaceAlpha = 0.8;
 
-xlabel("Time (yr)",'Interpreter','latex')
-ylabel("Absolute distance (deg)",'Interpreter','latex')
+xlabel("Time (year)",'Interpreter','latex')
+ylabel("Absolute distance (km)",'Interpreter','latex')
 title("Rice", "FontSize",14,'Interpreter','latex')
 
 set(gca,"TickLabelInterpreter",'latex')
 set(gcf, 'Color', 'White', 'Alphamap',0)
 
 saveas(gcf,"saved_plots/dist_vs_time.pdf")
+
+%% Table
+
+% Define your data (example data - replace with your actual values)
+load('generated_data\filename_database.mat')
+
+% Initialize LaTeX table
+latex_table = sprintf('\\begin{table}[ht]\n');
+latex_table = [latex_table sprintf('\\centering\n')];
+latex_table = [latex_table sprintf('\\caption{Performance Comparison}\n')];
+latex_table = [latex_table sprintf('\\label{tab:results}\n')];
+latex_table = [latex_table sprintf('\\begin{tabular}{|c|c|c|c|c|}\n')];
+latex_table = [latex_table sprintf('\\hline\n')];
+latex_table = [latex_table sprintf('Dataset & Layers & $\\theta$ valuesm  & Average error (kyears) & Averate speed ratio \\\\ \n')];
+latex_table = [latex_table sprintf('\\hline\n')];
+
+for d=1:length(database)
+    if (length(database{d}.layers) == 2)
+        if ~all(ismember('sea', database{d}.layers{2}))
+            continue
+        end
+    elseif length(database{d}.layers) == 1
+        if ~all(ismember(database{d}.layers{1}, {'sea','av'}))
+            continue
+        end
+
+    end
+    if strcmp(database{d}.layers{1},'av')
+        layers_str = database{d}.layers{1};
+        thetas_str = sprintf('%.2f',database{d}.theta);
+        av_theta = database{d}.theta;
+    else
+        % Format layers and thetas as comma-separated lists
+        layers_str = strjoin(database{d}.layers, ', ');
+        thetas_str = strjoin(cellfun(@(x) sprintf('%.2f', x), num2cell(database{d}.theta), 'UniformOutput', false), ', ');
+    end
+
+    load(database{d}.file)
+
+    % Add row to table
+    latex_table = [latex_table sprintf('%s & %s & %s & %.2f & %.2f \\\\ \n', ...
+        database{d}.dataset, layers_str, thetas_str, sqrt(result.squared_error), database{d}.theta(1)/av_theta)];
+    latex_table = [latex_table sprintf('\\hline\n')];
+end
+
+% Close table environment
+latex_table = [latex_table sprintf('\\end{tabular}\n')];
+latex_table = [latex_table sprintf('\\end{table}\n')];
+
+% Display the LaTeX code
+disp(latex_table);
+
+% Optionally write to file
+fid = fopen('results_table.tex', 'w');
+fprintf(fid, '%s', latex_table);
+fclose(fid);
+disp('LaTeX table saved to results_table.tex');

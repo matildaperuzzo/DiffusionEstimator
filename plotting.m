@@ -8,14 +8,24 @@ function recentIdx = findMostRecentDateStruct(structArray)
     % Find the index of the most recent date
     [~, recentIdx] = max(dates);
 end
+database = {};
 
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
+load('generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
 av_sq_err = result.squared_error;
+metadata = struct();
+metadata.dataset = "wheat";
+metadata.file = 'generated_data\all_wheat_av_100av_2025-03-24_11-09.mat';
+metadata.layers = {'av'};
+
+metadata.theta = theta_optim;
+
+database{length(database)+1} = metadata;
+
 
 all_layers = {'asym' 'csi' 'hydro' 'prec' 'tmean','sea'};
 sq_errs = zeros(length(all_layers));
 
-database = {};
+
 
 for idx1 = 1:length(all_layers)
     l1 = all_layers(idx1);  % Get current layer from index
@@ -78,8 +88,15 @@ colorbar;
 title("Wheat")
 
 %%
-load('C:\Users\matil\OneDrive\Documents\Work\AlanTuring_Oxford\bottlenecks\generated_data\cobo_av100_2025-03-10_14-02.mat')
+load('generated_data\cobo_av_100av_2025-03-31_15-55.mat')
 result = run_model(parameters, theta_optim);
+metadata = struct();
+metadata.dataset = "rice";
+metadata.file = "generated_data\cobo_av_100av_2025-03-31_15-55.mat";
+metadata.layers = {'av'};
+metadata.theta = theta_optim;
+
+database{length(database)+1} = metadata;
 av_sq_err = result.squared_error;
 all_layers = {'asym' 'csi' 'hydro' 'prec' 'tmean','sea'};
 sq_errs = zeros(length(all_layers));

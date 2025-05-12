@@ -14,6 +14,7 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     fwidth = 20;
     tic
     f = figure(1);
+    f.Position = [100 100 600 400];
     hold on;
 
     latlim = parameters.lat;
@@ -30,7 +31,7 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     %make sea white
     end
     geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
-        'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
+        'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5, "LineWidth",1)
 
     framem('FLineWidth', 1, 'FontSize', 4)
     [size_x size_y size_t] = size(A);

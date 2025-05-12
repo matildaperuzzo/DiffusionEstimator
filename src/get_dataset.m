@@ -56,7 +56,7 @@ function [x,y,t] = get_dataset(dataset)
 
     elseif strcmp(dataset,'maize')
 
-        maize = readtable("data/raw/hart_maize/MaizeDataset_cleaned.csv");
+        maize = readtable("data/raw/hart_maize/MaizeDataset_cleaned.xlsx");
         x = maize.Latitude;
         y = maize.Longitude;
         t = maize.Year;
