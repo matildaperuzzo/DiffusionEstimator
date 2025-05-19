@@ -12,6 +12,9 @@ for d=1:length(database)
             continue
         end
 
+    elseif ismember(database{d}.dataset,{"wheat","rice"})
+        continue
+
     end
     
     spread_errors_boot = zeros(n_bootstraps,1);

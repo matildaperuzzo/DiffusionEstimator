@@ -84,8 +84,7 @@ scatterm(parameters.dataset_lat, parameters.dataset_lon, 5, parameters.times(par
 
 
 [x,y,t] = get_dataset("all_wheat");
-clear parameters
-clear result
+
 parameters = data_prep(1, [1 0 1 0 0 0 0 0], x, y, t);
 result = run_model(parameters, [-1.87, 0.90]);
 pinhasi_active = parameters.dataset_idx;
@@ -110,7 +109,7 @@ axis xy
 cb = colorbar;
 cb.FontSize = 8;
 set(cb,'TickLabelInterpreter','latex','FontSize',6)
-ylabel(cb,'Year of arrival','FontSize',8,'Interpreter','latex');
+ylabel(cb,'Year of arrival, $Y_\ell$','FontSize',8,'Interpreter','latex');
 %make sea white
 
 geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
@@ -120,10 +119,70 @@ scatterm(parameters.dataset_lat, parameters.dataset_lon, 3, parameters.times(par
 
 saveas(gcf, 'saved_plots/Diffusive_data.pdf')
 
-%%
+%% simulation plot
+f = figure (1);
+set(gcf, 'Color', 'White')
+f.Position = [100 100 300 150];
+% subplot(1,2,2)
+hold on;
 
-plot_map(parameters, parameters.dataset_bp, false)
+parameters = data_prep(20, [1 0 1 0 0 0 0 0], x, y, t);
+result = run_model(parameters, [-1.87, 0.90]);
+
+latlim = parameters.lat;
+lonlim = parameters.lon;
+
+worldmap(latlim, lonlim)
 colormap(pepper)
+
+c = colorbar;
+ylabel(c,'Year','FontSize',12);
+axis xy
+
+R = georefcells(parameters.lat, parameters.lon, ...
+    size(parameters.X{1}));
+
+simulation = parameters.end_time - mean(result.A, 3)*(parameters.end_time-parameters.start_time);
+geoshow(simulation, R, 'DisplayType', 'texturemap')
+
+geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
+    'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
+
+
+[x,y,t] = get_dataset("all_wheat");
+pinhasi_active = parameters.dataset_idx;
+land = shaperead('landareas.shp', 'UseGeoCoords', true);
+
+
+loc = 10;
+fwidth = 20;
+tic
+
+hold on;
+
+latlim = parameters.lat;
+lonlim = parameters.lon;
+
+
+colormap(pepper)
+
+axis xy
+
+cb = colorbar;
+cb.FontSize = 8;
+set(cb,'TickLabelInterpreter','latex','FontSize',6)
+ylabel(cb,'Year of arrival, $\hat{Y}_\ell$','FontSize',8,'Interpreter','latex');
+%make sea white
+
+geoshow(fliplr([land.Lat]),fliplr([land.Lon]),'DisplayType', ...
+    'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5)
+framem('FLineWidth', 1, 'FontSize', 4)
+
+
+
+saveas(gcf, 'saved_plots/Simulated_data.pdf', 'pdf')
+clear parameters
+clear result
 
 %% Model figure plots
 
@@ -581,7 +640,7 @@ latex_table = [latex_table sprintf('\\caption{Performance Comparison}\n')];
 latex_table = [latex_table sprintf('\\label{tab:results}\n')];
 latex_table = [latex_table sprintf('\\begin{tabular}{|c|c|c|c|c|}\n')];
 latex_table = [latex_table sprintf('\\hline\n')];
-latex_table = [latex_table sprintf('Dataset & Layers & $\\theta$ valuesm  & Average error (kyears) & Averate speed ratio \\\\ \n')];
+latex_table = [latex_table sprintf('Dataset & Layers & $\\theta$ valuesm  & Average error (years) & Diff. probability \\\\ \n')];
 latex_table = [latex_table sprintf('\\hline\n')];
 
 for d=1:length(database)
@@ -606,10 +665,15 @@ for d=1:length(database)
     end
 
     load(database{d}.file)
-
+    if length(theta_optim) > 1
+        prob_diff = 1/(1+exp(theta_optim(1)+theta_optim(2))) - 1/(1+exp(theta_optim(1)));
+    else
+        prob_diff = 1;
+    end
+    
     % Add row to table
     latex_table = [latex_table sprintf('%s & %s & %s & %.2f & %.2f \\\\ \n', ...
-        database{d}.dataset, layers_str, thetas_str, sqrt(result.squared_error), database{d}.theta(1)/av_theta)];
+        database{d}.dataset, layers_str, thetas_str, sqrt(result.squared_error), prob_diff)];
     latex_table = [latex_table sprintf('\\hline\n')];
 end
 
@@ -621,6 +685,95 @@ latex_table = [latex_table sprintf('\\end{table}\n')];
 disp(latex_table);
 
 % Optionally write to file
+fid = fopen('results_table.tex', 'w');
+fprintf(fid, '%s', latex_table);
+fclose(fid);
+disp('LaTeX table saved to results_table.tex');
+
+%%
+load('generated_data\filename_database.mat')
+
+% Initialize LaTeX table
+latex_table = sprintf('\\begin{table}[ht]\n');
+latex_table = [latex_table sprintf('\\centering\n')];
+latex_table = [latex_table sprintf('\\caption{Performance Comparison}\n')];
+latex_table = [latex_table sprintf('\\label{tab:results}\n')];
+latex_table = [latex_table sprintf('\\begin{tabular}{@{}c@{}}\n')]; % Single column wrapper
+latex_table = [latex_table sprintf('\\toprule\n')];
+
+% Process wheat data
+wheat_table = sprintf('\\textbf{Wheat Dataset}\\\\\n');
+wheat_table = [wheat_table sprintf('\\begin{tabular}{cccccc}\n')]; % Added column
+wheat_table = [wheat_table sprintf('\\toprule\n')];
+wheat_table = [wheat_table sprintf('Layers & $\\theta$ values & Avg error & Prob. diff. & Velocity diff. \\\\ \n')]; % New header
+wheat_table = [wheat_table sprintf('\\midrule\n')];
+
+% Process rice data
+rice_table = sprintf('\\textbf{Rice Dataset}\\\\\n');
+rice_table = [rice_table sprintf('\\begin{tabular}{cccccc}\n')]; % Added column
+rice_table = [rice_table sprintf('\\toprule\n')];
+rice_table = [rice_table sprintf('Layers & $\\theta$ values & Avg error & Prob. diff. & Velocity diff. \\\\ \n')]; % New header
+rice_table = [rice_table sprintf('\\midrule\n')];
+
+for d = 1:length(database)
+    % Skip entries that don't match criteria
+    if (length(database{d}.layers) == 2)
+        if ~all(ismember('sea', database{d}.layers{2}))
+            continue
+        end
+    elseif length(database{d}.layers) == 1
+        if ~all(ismember(database{d}.layers{1}, {'sea','av'}))
+            continue
+        end
+    end
+    
+    % Format data
+    if strcmp(database{d}.layers{1},'av')
+        layers_str = database{d}.layers{1};
+        thetas_str = sprintf('%.2f',database{d}.theta);
+    else
+        layers_str = strjoin(database{d}.layers, ', ');
+        thetas_str = strjoin(cellfun(@(x) sprintf('%.2f', x), num2cell(database{d}.theta), 'UniformOutput', false), ', ');
+        thetas_str = sprintf('%.2f',database{d}.theta(2));
+    end
+    vmax = 110.567/4;
+    load(database{d}.file)
+    if length(theta_optim) > 1
+        prob_diff = 1/(1+exp(theta_optim(1)+theta_optim(2))) - 1/(1+exp(theta_optim(1)));
+        % Calculate velocity difference (example calculation - replace with your actual formula)
+        velocity_diff = prob_diff*vmax; 
+    else
+        prob_diff = 1;
+        velocity_diff = prob_diff*vmax; % Default value when no velocity difference available
+    end
+    
+    % Add to appropriate subtable
+    if contains(database{d}.dataset, 'wheat', 'IgnoreCase', true)
+        wheat_table = [wheat_table sprintf('%s & %s & %.2f & %.2f & %.2f \\\\ \n', ...
+            layers_str, thetas_str, sqrt(result.squared_error), prob_diff, velocity_diff)];
+    elseif contains(database{d}.dataset, 'rice', 'IgnoreCase', true)
+        rice_table = [rice_table sprintf('%s & %s & %.2f & %.2f & %.2f \\\\ \n', ...
+            layers_str, thetas_str, sqrt(result.squared_error), prob_diff, velocity_diff)];
+    end
+end
+
+% Close subtables
+wheat_table = [wheat_table sprintf('\\bottomrule\n')];
+wheat_table = [wheat_table sprintf('\\end{tabular}\n')];
+rice_table = [rice_table sprintf('\\bottomrule\n')];
+rice_table = [rice_table sprintf('\\end{tabular}\n')];
+
+% Combine tables with spacing
+latex_table = [latex_table wheat_table];
+latex_table = [latex_table sprintf('\\\\[2ex]\n')]; % Vertical space between tables
+latex_table = [latex_table rice_table];
+latex_table = [latex_table sprintf('\\bottomrule\n')];
+latex_table = [latex_table sprintf('\\end{tabular}\n')];
+latex_table = [latex_table sprintf('\\end{table}\n')];
+
+
+
+% Write to file
 fid = fopen('results_table.tex', 'w');
 fprintf(fid, '%s', latex_table);
 fclose(fid);
