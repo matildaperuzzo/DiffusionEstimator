@@ -7,15 +7,15 @@ tic
 t = datetime;
 t.Format = 'yyyy-MM-dd_HH-mm';
 % choose whether to load or start
-load_data = true;
+load_data = false;
 get_errors = true;
 
 %%
 if load_data == false
 
     number_of_averages = 100;
-    dataset = 'maize'; %options: 'cobo','pinhasi','all_wheat'
-    layers = {'av','asym'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
+    dataset = 'all_wheat'; %options: 'cobo','pinhasi','all_wheat'
+    layers = {'av'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
     directory = 'generated_data/';
 
     %create filename
@@ -295,6 +295,8 @@ if get_errors
     all_theta = zeros(n_bootstraps,length(theta_start));
     all_errors = zeros(n_bootstraps, 1);
     factor = 1;
+    [x,y,t] = get_dataset(dataset);
+    parameters =  data_prep(number_of_averages, active_layers, x, y, t);
     complete_dataset = parameters.dataset_idx;
     
     parameters.calculate_W = false;
@@ -302,7 +304,7 @@ if get_errors
         parameters = parameters.rmfield(parameters, random);
     end
     
-    parfor i = 1:n_bootstraps
+    for i = 1:n_bootstraps
         % 
 
         rng('shuffle');
@@ -316,10 +318,12 @@ if get_errors
         y = sampled_dataset(:,2);
         t = sampled_dataset(:,3);
 
-        parameters =  data_prep(number_of_averages, active_layers, x, y, t);
+        parameters.dataset_idx = sampled_dataset;
+        factor = 1e2;
 
         objective_function = @(theta) optimize_model(theta, parameters, factor);
     
+        % WITH GRADIENT
         options = optimoptions('fminunc', ...
             'Display', 'iter', ...
             'Algorithm', 'trust-region', ...
@@ -333,9 +337,7 @@ if get_errors
             'MaxIterations', 10000, ...
             'OutputFcn', @saveIterations, ... % Call the custom function
             "UseParallel", false);
-    
-        % Run fminunc
-    
+        
         [theta, fval, exitflag, output, grad, hessian] = fminunc(objective_function, theta_start, options);
     
         result = run_model(parameters,theta);
