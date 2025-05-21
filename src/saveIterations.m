@@ -14,7 +14,7 @@ function stop = saveIterations(x, optimValues, state)
     end
     stop = false;
     % No stopping criterion
-    if length(paramsHistory)>5
+    if length(paramsHistory)>7
         latest_thetas = paramsHistory(end-4:end,:);
         ref = latest_thetas(1,:);
         if all(latest_thetas == ref,'all')

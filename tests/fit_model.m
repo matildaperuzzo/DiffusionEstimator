@@ -15,7 +15,7 @@ if load_data == false
 
     number_of_averages = 100;
     dataset = 'maize'; %options: 'cobo','pinhasi','all_wheat'
-    layers = {'av','csi','sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
+    layers = {'av','asym'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
     directory = 'generated_data/';
 
     %create filename
@@ -202,7 +202,7 @@ end
 if level < 5
     tic
     % parameters = data_prep(number_of_averages, active_layers, x, y, t);
-    factors = [1e7];
+    factors = [1e5];
     all_params = {};
     for factor=factors
     
