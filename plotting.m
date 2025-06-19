@@ -10,11 +10,11 @@ function recentIdx = findMostRecentDateStruct(structArray)
 end
 database = {};
 
-load('generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
+load('generated_data\all_wheat_av_100av_2025-06-14_02-27.mat')
 av_sq_err = result.squared_error;
 metadata = struct();
 metadata.dataset = "wheat";
-metadata.file = 'generated_data\all_wheat_av_100av_2025-03-24_11-09.mat';
+metadata.file = 'generated_data\all_wheat_av_100av_2025-06-14_02-27.mat';
 metadata.layers = {'av'};
 
 metadata.theta = theta_optim;
@@ -92,7 +92,7 @@ load('generated_data\cobo_av_100av_2025-03-31_15-55.mat')
 result = run_model(parameters, theta_optim);
 metadata = struct();
 metadata.dataset = "rice";
-metadata.file = "generated_data\cobo_av_100av_2025-03-31_15-55.mat";
+metadata.file = 'generated_data\cobo_av_100av_2025-03-31_15-55.mat';
 metadata.layers = {'av'};
 metadata.theta = theta_optim;
 
@@ -162,11 +162,11 @@ colorbar;
 title("Rice")
 
 %%
-load('generated_data\maize_av_100av_2025-05-16_09-45.mat')
+load('generated_data\maize_av_100av_2025-06-16_09-06.mat')
 result = run_model(parameters, theta_optim);
 metadata = struct();
 metadata.dataset = "maize";
-metadata.file = 'generated_data\maize_av_100av_2025-05-16_09-45.mat';
+metadata.file = 'generated_data\maize_av_100av_2025-06-16_09-06.mat';
 metadata.layers = {'av'};
 metadata.theta = theta_optim;
 

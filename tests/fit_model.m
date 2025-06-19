@@ -295,8 +295,6 @@ if get_errors
     all_theta = zeros(n_bootstraps,length(theta_start));
     all_errors = zeros(n_bootstraps, 1);
     factor = 1;
-    [x,y,t] = get_dataset(dataset);
-    parameters =  data_prep(number_of_averages, active_layers, x, y, t);
     complete_dataset = parameters.dataset_idx;
     
     parameters.calculate_W = false;
@@ -311,6 +309,8 @@ if get_errors
         n = size(complete_dataset, 1); % Number of points in the dataset
         % Generate n random indices between 1 and n
         random_indices = randi(n, n, 1);
+        [x,y,t] = get_dataset(dataset);
+        parameters =  data_prep(number_of_averages, active_layers, x, y, t);
         % Use the indices to sample points from the dataset
         sampled_dataset = complete_dataset(random_indices, :);
         

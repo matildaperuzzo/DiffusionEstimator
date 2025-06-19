@@ -7,7 +7,7 @@ function animate(A_mat, x, y, filename)
         % Plot contour plots of errors standardizing the errors
         figure
         hold on;
-        pcolor(X,Y,squeeze(A_mat(:,:,i))')
+        imagesc(x,y,squeeze(A_mat(:,:,i))')
         clim([min(A_mat(:)), max(A_mat(:))]);
         %add colorbar and label
         c = colorbar;
