@@ -21,13 +21,13 @@ DESCRIPTION OF PROCESS
 clear
 clc
 
-delta = 1/4;
+delta = 1/2;
 
 clearvars -except delta
 
 disp('Build geography data ...')
 
-filename = 'data/prep/geography_0p25deg.mat';
+filename = 'data/prep/geography_0p5deg.mat';
 
 %% Prepare Template Rater
 
@@ -328,9 +328,9 @@ maize_data = (maize_data - wheat_mean)/wheat_std;
 maize_data(sea_layer) = 0;
 
 crop_data = {};
-crop_data{'wheat'} = wheat_data;
-crop_data{'rice'} = rice_data;
-crop_data{'maize'} = maize_data;
+crop_data{1} = struct('crop','wheat','data',wheat_data);
+crop_data{2} = struct('crop','rice','data',rice_data);
+crop_data{3} = struct('crop','maize','data',maize_data);
 
 save(filename, 'crop_data', '-append')
 

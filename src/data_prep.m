@@ -46,57 +46,93 @@ function parameters = data_prep(n_averages, active_layers, lats, lons, years)
     % create the X vector
     X = {};
     % csi layer
-    if active_layers(3)
-        load('data/prep/geography_0p5deg.mat',"csidata");
-        % add csi data
-        csidata = csidata(latidx,lonidx);
-        X{length(X)+1} = csidata;
-        clear csidata
+    if length(active_layers)>=3
+        if active_layers(3)
+            load('data/prep/geography_0p5deg.mat',"csidata");
+            % add csi data
+            csidata = csidata(latidx,lonidx);
+            X{length(X)+1} = csidata;
+            clear csidata
+        end
     end
 
     % river layer
-    if active_layers(4)
-        load('data/prep/geography_0p5deg.mat',"acc");
-        hydro = acc.data;
-        clear acc
-        hydro = hydro(latidx,lonidx);
-        X{length(X)+1} = hydro;
-        clear hydro
+    if length(active_layers)>=4
+        if active_layers(4)
+            load('data/prep/geography_0p5deg.mat',"acc");
+            hydro = acc.data;
+            clear acc
+            hydro = hydro(latidx,lonidx);
+            X{length(X)+1} = hydro;
+            clear hydro
+        end
     end
-
     % mean precipitation
-    if active_layers(5)
-        load('data/prep/geography_0p5deg.mat',"trace");
-        trace_dat = trace.prec;
-        time_mask = (trace.time >= parameters.start_time) & (trace.time <= parameters.end_time);
-        clear trace
-        selected_data = trace_dat(:, :, time_mask);
-        trace_dat = mean(selected_data,3);
-        trace_dat = trace_dat(latidx,lonidx);
-        X{length(X)+1} = trace_dat;
-        clear trace_dat
+    if length(active_layers)>=5
+        if active_layers(5)
+            load('data/prep/geography_0p5deg.mat',"trace");
+            trace_dat = trace.prec;
+            time_mask = (trace.time >= parameters.start_time) & (trace.time <= parameters.end_time);
+            clear trace
+            selected_data = trace_dat(:, :, time_mask);
+            trace_dat = mean(selected_data,3);
+            trace_dat = trace_dat(latidx,lonidx);
+            X{length(X)+1} = trace_dat;
+            clear trace_dat
+        end
     end
 
     % mean surface temperature
-    if active_layers(6)
-        load('data/prep/geography_0p5deg.mat',"trace");
-        trace_dat = trace.temp;
-        time_mask = (trace.time >= parameters.start_time) & (trace.time <= parameters.end_time);
-        clear trace
-        selected_data = trace_dat(:, :, time_mask);
-        trace_dat = mean(selected_data,3);
-        trace_dat = trace_dat(latidx,lonidx);
-        X{length(X)+1} = trace_dat;
-        clear trace_dat
+    if length(active_layers)>=6
+        if active_layers(6)
+            load('data/prep/geography_0p5deg.mat',"trace");
+            trace_dat = trace.temp;
+            time_mask = (trace.time >= parameters.start_time) & (trace.time <= parameters.end_time);
+            clear trace
+            selected_data = trace_dat(:, :, time_mask);
+            trace_dat = mean(selected_data,3);
+            trace_dat = trace_dat(latidx,lonidx);
+            X{length(X)+1} = trace_dat;
+            clear trace_dat
+        end
     end
 
-    if active_layers(7)
-        load('data/prep/geography_0p5deg.mat',"sea");
-        data = sea.data;
-        data = data(latidx,lonidx);
-        X{length(X)+1} = data;
-        clear sea
-        clear data
+    if length(active_layers)>=7
+        if active_layers(7)
+            load('data/prep/geography_0p5deg.mat',"sea");
+            data = sea.data;
+            data = data(latidx,lonidx);
+            X{length(X)+1} = data;
+            clear sea
+            clear data
+        end
+    end
+
+    if length(active_layers)>=8
+        if active_layers(8)
+            load('data/prep/geography_0p5deg.mat',"crop_data");
+            data = crop_data{1}.data;
+            data = data(latidx,lonidx);
+            X{length(X)+1} = data;
+        end
+    end
+    
+    if length(active_layers)>=9
+        if active_layers(9)
+            load('data/prep/geography_0p5deg.mat',"crop_data");
+            data = crop_data{2}.data;
+            data = data(latidx,lonidx);
+            X{length(X)+1} = data;
+        end
+    end
+
+    if length(active_layers)>=10
+        if active_layers(10)
+            load('data/prep/geography_0p5deg.mat',"crop_data");
+            data = crop_data{3}.data;
+            data = data(latidx,lonidx);
+            X{length(X)+1} = data;
+        end
     end
 
     parameters.X = X;

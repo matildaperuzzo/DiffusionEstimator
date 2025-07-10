@@ -8,14 +8,14 @@ t = datetime;
 t.Format = 'yyyy-MM-dd_HH-mm';
 % choose whether to load or start
 load_data = false;
-get_errors = true;
+get_errors = false;
 
 %%
 if load_data == false
 
     number_of_averages = 100;
-    dataset = 'all_wheat'; %options: 'cobo','pinhasi','all_wheat'
-    layers = {'av'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean'}
+    dataset = 'all_wheat'; %options: 'cobo','pinhasi','all_wheat','maize'
+    layers = {'av','sea','crop'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
     directory = 'generated_data/';
 
     %create filename
@@ -88,7 +88,18 @@ if level < 1
         sea_range = [0., 0.];
     end
 
-    ranges = [average_range; anisotropy_range; csi_range; hydro_range; prec_range; tmean_range; sea_range];
+    if ismember('crop',layers)
+        if strcmp(dataset,'all_wheat') | strcmp(dataset,'pinhasi') | strcmp(dataset,'desouza')
+            crop_ranges = [[-1,1];[0,0];[0,0]];
+        elseif strcmp(dataset,'cobo')
+            crop_ranges = [[0,0];[-1,1];[0,0]];
+        elseif strcmp(dataset,'maize')
+            crop_ranges = [[0,0];[0,0];[-1,1]];
+        end
+        
+    end
+
+    ranges = [average_range; anisotropy_range; csi_range; hydro_range; prec_range; tmean_range; sea_range; crop_ranges];
 
     active_layers = diff(ranges,1,2)>0;
     ranges = ranges(active_layers,:);
@@ -144,6 +155,7 @@ end
 % new_layer = temp_params.X{1}.*temp_params.X{2};
 % 
 % % remove sea from prec layer
+% load('data/prep/geography_0p5deg.mat',"crop_data");
 % parameters.X{1} = parameters.X{1}.*(1-temp_params.X{2});
 % parameters.X{2} = new_layer;
 
