@@ -88,11 +88,11 @@ colorbar;
 title("Wheat")
 
 %%
-load('generated_data\cobo_av_100av_2025-03-31_15-55.mat')
+load('generated_data\cobo_av_100av_2025-07-10_15-10.mat')
 result = run_model(parameters, theta_optim);
 metadata = struct();
 metadata.dataset = "rice";
-metadata.file = 'generated_data\cobo_av_100av_2025-03-31_15-55.mat';
+metadata.file = 'generated_data\cobo_av_100av_2025-07-10_15-10.mat';
 metadata.layers = {'av'};
 metadata.theta = theta_optim;
 

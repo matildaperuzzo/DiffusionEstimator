@@ -13,9 +13,9 @@ get_errors = false;
 %%
 if load_data == false
 
-    number_of_averages = 100;
-    dataset = 'all_wheat'; %options: 'cobo','pinhasi','all_wheat','maize'
-    layers = {'av','sea','crop'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
+    number_of_averages = 50;
+    dataset = 'cobo'; %options: 'cobo','pinhasi','all_wheat','maize'
+    layers = {'av','sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
     directory = 'generated_data/';
 
     %create filename
@@ -96,7 +96,8 @@ if level < 1
         elseif strcmp(dataset,'maize')
             crop_ranges = [[0,0];[0,0];[-1,1]];
         end
-        
+    else
+        crop_ranges = [[0,0];[0,0];[0,0]];
     end
 
     ranges = [average_range; anisotropy_range; csi_range; hydro_range; prec_range; tmean_range; sea_range; crop_ranges];
@@ -302,7 +303,7 @@ plot_map(parameters, final_errors, true)
 %% Bootstrapp
 
 if get_errors
-    n_bootstraps = 50;
+    n_bootstraps = 5;
     
     all_theta = zeros(n_bootstraps,length(theta_start));
     all_errors = zeros(n_bootstraps, 1);
@@ -321,27 +322,17 @@ if get_errors
 
 
     seeds = randi(2^32,n_bootstraps,1);
+    complete_dataset = parameters.dataset_idx;
+    n = size(complete_dataset,1);
 
     parfor i = 1:n_bootstraps
         rng(seeds(i));
-        % 
-        [x,y,t] = get_dataset(dataset);
-        parameters =  data_prep(number_of_averages, active_layers, x, y, t);
-        complete_dataset = parameters.dataset_idx;
-        n = size(complete_dataset, 1); % Number of points in the dataset
-        % Generate n random indices between 1 and n
-        random_indices = randi(n, n, 1);
-        [x,y,t] = get_dataset(dataset);
-        parameters =  data_prep(number_of_averages, active_layers, x, y, t);
-        % Use the indices to sample points from the dataset
-        sampled_dataset = complete_dataset(random_indices, :);
-        datasets(i,:,:) = sampled_dataset;
-        
+        random_indices = randi(n,n,1);
+        sampled_dataset = complete_dataset(random_indices,:);
         x = sampled_dataset(:,1);
         y = sampled_dataset(:,2);
         t = sampled_dataset(:,3);
 
-        parameters.dataset_idx = sampled_dataset;
         factor = 1e4;
         objective_function = @(theta) optimize_model(theta, parameters, factor);
         % WITH GRADIENT

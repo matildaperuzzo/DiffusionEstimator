@@ -21,6 +21,11 @@ for d=1:length(database)
     spread_sq_errors_boot = zeros(n_bootstraps,1);
     load(database{d}.file)
     disp(database{d}.file)
+    if exist('spread_errors_boot')
+        if mean(spread_errors_boot) > 0
+            continue
+        end
+    end
     complete_dataset = parameters.dataset_idx;
     figure(d)
     hold on
@@ -45,6 +50,8 @@ for d=1:length(database)
     disp(result.squared_error)
     disp(mean(spread_sq_errors_boot))
     disp(std(spread_sq_errors_boot))
+    clear spread_sq_errors_boot
+    clear spread_errors_boot
 end
 
 %%

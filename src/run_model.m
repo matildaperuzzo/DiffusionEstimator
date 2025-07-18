@@ -1,10 +1,14 @@
-function result = run_model(parameters, theta)
+function result = run_model(parameters, theta, dataset)
     % create result structure
     result = struct();
     % unpack parameters structure
     A_start = (parameters.A);
-
-    data = (parameters.dataset_idx);
+    
+    if nargin > 2
+        data = dataset;
+    else
+        data = (parameters.dataset_idx);
+    end
     active_layers = parameters.active_layers;
     X = parameters.X;
     % Initialize the accumulators

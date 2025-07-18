@@ -257,14 +257,14 @@ addpath("src")
 
 load('generated_data\filename_database.mat')
 
-load('generated_data\all_wheat_av_100av_2025-03-24_11-09.mat')
+load('generated_data\all_wheat_av_100av_2025-06-14_02-27.mat')
 labels_w = {};
 labels_w{1} = "av";
 sq_errors_w = [result.squared_error];
 yr_errors_w = [mean(spread_errors_boot)];
 yr_errorbar_w = [std(spread_errors_boot)];
 
-load('generated_data\cobo_av_100av_2025-03-31_15-55.mat')
+load('generated_data\cobo_av_100av_2025-07-10_15-10.mat')
 result = run_model(parameters, theta_optim);
 labels_r = {};
 labels_r{1} = "av";
@@ -272,7 +272,7 @@ sq_errors_r = [result.squared_error];
 yr_errors_r = [mean(spread_errors_boot)];
 yr_errorbar_r = [std(spread_errors_boot)];
 
-load('generated_data\maize_av_100av_2025-05-16_09-45.mat')
+load('generated_data\maize_av_100av_2025-06-16_09-06.mat')
 result = run_model(parameters, theta_optim);
 labels_m = {};
 sq_errors_m = [result.squared_error];
@@ -290,11 +290,14 @@ for i=1:length(database)
         end
     end
     
+    
     if ismember('wheat', database{i}.dataset)
         disp(database{i}.layers)
         labels_w{length(labels_w)+1} = database{i}.layers{1};
         load(database{i}.file)
         sq_errors_w = [sq_errors_w result.squared_error];
+        % yr_errors_w = [yr_errors_w sqrt(result.squared_error)];
+        % yr_errorbar_w = [yr_errorbar_w 0];
         yr_errors_w = [yr_errors_w mean(spread_errors_boot)];
         yr_errorbar_w = [yr_errorbar_w std(spread_errors_boot)];
     elseif ismember('rice', database{i}.dataset)
@@ -304,6 +307,8 @@ for i=1:length(database)
         sq_errors_r = [sq_errors_r result.squared_error];
         yr_errors_r = [yr_errors_r mean(spread_errors_boot)];
         yr_errorbar_r = [yr_errorbar_r std(spread_errors_boot)];
+        % yr_errors_r = [yr_errors_r sqrt(result.squared_error)];
+        % yr_errorbar_r = [yr_errorbar_r 0];
     elseif ismember('maize',database{i}.dataset)
         disp(database{i}.layers)
         labels_m{length(labels_m)+1} = database{i}.layers{1};
@@ -311,6 +316,8 @@ for i=1:length(database)
         sq_errors_m = [sq_errors_m result.squared_error];
         yr_errors_m = [yr_errors_m mean(spread_errors_boot)];
         yr_errorbar_m = [yr_errorbar_m std(spread_errors_boot)];
+        % yr_errors_m = [yr_errors_m sqrt(result.squared_error)];
+        % yr_errorbar_m = [yr_errorbar_m 0];
     end
 
     clear result
@@ -323,7 +330,7 @@ w_idx = fliplr(w_idx);
 
 yr_errors = [yr_errors_w(w_idx); yr_errors_r(w_idx); yr_errors_m(w_idx)];
 sq_errors = [sq_errors_w(w_idx); sq_errors_r(w_idx); sq_errors_m(w_idx)];
-yr_errorbar = [yr_errorbar_w(w_idx); yr_errorbar_r(w_idx); yr_errorbar_m_m(w_idx)];
+yr_errorbar = [yr_errorbar_w(w_idx); yr_errorbar_r(w_idx); yr_errorbar_m(w_idx)];
 
 %%
 
@@ -342,9 +349,9 @@ xticklabels({"wheat", "rice", "maize"})
 cmap = pepper(1:end-60,:);
 % ylim([0, 3.2])
 
-layer_names = {"baseline",'asymmetry','crop suitability','river size','precipitation','mean temperature','sea'};
+layer_names = {"baseline",'asymmetry','river size','precipitation','mean temperature','crop suitability','sea'};
 for k = 1:length(yr_errors_r)
-    b2(k).FaceColor = cmap(int16((k)*length(cmap)/(length(yr_errors_r)+1)),:);
+    % b2(k).FaceColor = cmap(int16((k)*length(cmap)/(length(yr_errors_r)+1)),:);
     xpos = b2(k).XEndPoints;  % Get x-position of bars
     ypos = b2(k).YEndPoints+0.02;  % Get y-position of bars
     % text(xpos, ypos, layer_names{w_idx(k)}, ...
@@ -388,7 +395,7 @@ for p = 1:3
     
     % Gradient coloring
     
-    layer_names = {"Baseline",'Anisotropy','Crop suitability','River size','Precipitation','Mean temperature',"Sea only"};
+    layer_names = {"Baseline",'Anisotropy','River size','Precipitation','Mean temperature','Crop suitability',"Sea only"};
     for k = 1:length(yr_errors_r)
         b2(k).FaceColor = cmap(int16((k)*length(cmap)/(length(yr_errors_r)+1)),:);
         ypos = b2(k).XEndPoints;  % Get x-position of bars

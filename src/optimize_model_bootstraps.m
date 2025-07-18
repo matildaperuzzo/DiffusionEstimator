@@ -1,5 +1,5 @@
-function [error, grad, hessian] = optimize_model(theta, parameters, factor)
-    result = run_model(parameters, theta);
+function [error, grad, hessian] = optimize_model(theta, parameters, data, factor)
+    result = run_model(parameters, theta, data);
     error = result.squared_error;
     if nargout > 1
         f = @(theta) run_model(parameters, theta).squared_error;
