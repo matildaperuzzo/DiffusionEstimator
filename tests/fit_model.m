@@ -8,14 +8,14 @@ t = datetime;
 t.Format = 'yyyy-MM-dd_HH-mm';
 % choose whether to load or start
 load_data = false;
-get_errors = true;
+get_errors = false;
 
 %%
 if load_data == false
 
     number_of_averages = 50;
     dataset = 'all_wheat'; %options: 'cobo','pinhasi','all_wheat','maize'
-    layers = {'av', 'asym', 'csi','hydro','sea','crop'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
+    layers = {'av', 'prec', 'sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
     directory = 'generated_data/';
 
     %create filename
@@ -194,6 +194,7 @@ end
 %% measure grid
 
 if level < 4
+    tic
     parameters.n = 20;
     [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 2, parameters);
 
@@ -210,6 +211,7 @@ if level < 4
         disp('Local minimum found')
     end
     save(filename, 'theta_start', "level", "min_error", '-append')
+    disp(toc)
 end
 
 %% Level 5 - run optimizer

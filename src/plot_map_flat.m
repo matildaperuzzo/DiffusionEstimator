@@ -27,7 +27,7 @@ function plot_map_flat(parameters, errors, adjust_scale, A_result, aspect)
     
     % Overlay land areas
     geoshow(fliplr([land.Lat]), fliplr([land.Lon]), 'DisplayType', ...
-           'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5, "LineWidth", 1);
+           'Polygon', 'FaceColor', 'white', 'FaceAlpha', 0.5, "LineWidth", 0.1);
     
     % Create custom colormap
     color1 = [30/255, 51/255, 110/255];   % Blue
@@ -37,7 +37,7 @@ function plot_map_flat(parameters, errors, adjust_scale, A_result, aspect)
     colormap(cmap);
     
     % Plot error points
-    s = scatter(parameters.dataset_lon, parameters.dataset_lat, 5, errors, 'filled');
+    s = scatter(parameters.dataset_lon, parameters.dataset_lat, 8, errors, 'filled', 'MarkerEdgeColor', "white", 'LineWidth', .01);
     
     % Set color limits
     if nargin > 2 && adjust_scale
@@ -50,8 +50,16 @@ function plot_map_flat(parameters, errors, adjust_scale, A_result, aspect)
     % Add colorbar
     cb = colorbar;
     cb.FontSize = 8;
-    set(cb, 'TickLabelInterpreter', 'latex', 'FontSize', 8);
-    ylabel(cb, '$\hat{Y}_\ell, Y_\ell$ (kyears)', 'FontSize', 8, 'Interpreter', 'latex', 'Rotation',-90);
+    set(cb, 'TickLabelInterpreter', 'latex', 'FontSize', 8*2);
+    ylabel(cb, '$\hat{Y}_\ell, Y_\ell$ (kyears)', 'FontSize', 8*2, 'Interpreter', 'latex', 'Rotation',-90, 'Color','k');
+    % tickLabels = cb.TickLabels; % Get current tick labels
+    % for i = 1:length(tickLabels)
+    %     tickLabels{i} = ['\textcolor{black}{', tickLabels{i}, '}']; % Wrap in color command
+    % end
+    % cb.TickLabels = tickLabels;
+    cb.TickLabelInterpreter = 'latex';
+    cb.Color = 'k';
+    cb
     
     % Adjust axes
     xlim([min(parameters.lon) max(parameters.lon)]);
