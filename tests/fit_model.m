@@ -1,8 +1,17 @@
 %% Start new run 
 
 clear all
-addpath("..\")
-addpath("src")
+% Get the directory containing this script
+currentDir = fileparts(mfilename('fullpath'));
+
+% Get the parent directory
+parentDir = fileparts(currentDir);
+
+% Define the 'src' folder path
+srcDir = fullfile(parentDir, 'src');
+% Add both directories to the MATLAB path
+cd(parentDir)
+addpath('src')
 tic
 t = datetime;
 t.Format = 'yyyy-MM-dd_HH-mm';
@@ -15,7 +24,7 @@ if load_data == false
 
     number_of_averages = 50;
     dataset = 'all_wheat'; %options: 'cobo','pinhasi','all_wheat','maize'
-    layers = {'av', 'prec', 'sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
+    layers = {'av'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
     directory = 'generated_data/';
 
     %create filename
@@ -173,11 +182,11 @@ if level < 3
     speeds = distances./rel_times;
     speeds = speeds(~isnan(speeds));
     
-    figure (1)
-    histogram(speeds,linspace(0,1,21))
-    xlabel("Speed")
-    ylabel('Frequency')
-    title("Speed distribution")
+    % figure (1)
+    % histogram(speeds,linspace(0,1,21))
+    % xlabel("Speed")
+    % ylabel('Frequency')
+    % title("Speed distribution")
     
     if mean(speeds) > 0.6
         disp("Speeds are too high, decrease the time step for convergence")
@@ -194,7 +203,7 @@ end
 %% measure grid
 
 if level < 4
-    tic
+    
     parameters.n = 20;
     [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 2, parameters);
 
@@ -211,13 +220,13 @@ if level < 4
         disp('Local minimum found')
     end
     save(filename, 'theta_start', "level", "min_error", '-append')
-    disp(toc)
+    
 end
 
 %% Level 5 - run optimizer
 
 if level < 5
-    tic
+    
     % parameters = data_prep(number_of_averages, active_layers, x, y, t);
     factors = [1e5];
     all_params = {};
@@ -266,7 +275,6 @@ if level < 5
 
     level = 5;
     save(filename, 'theta_optim', "level", "min_error", "all_params", '-append')
-    disp(toc)
 end
 
 %%
@@ -280,7 +288,7 @@ end
 
 %% report results
 result = run_model(parameters,theta_optim);
-runtime = toc;
+
 A = result.A;
 final_errors = result.errors;
 times = result.times;
@@ -300,15 +308,15 @@ disp('Error in years: ' + string(sqrt(mean(result.squared_error))))
 
 save(filename, "result", '-append')
 
-plot_map(parameters, final_errors, true)
+% plot_map(parameters, final_errors, true)
 
 %% Bootstrapp
-
+tic
 if get_errors
-    n_bootstraps = 5;
+    n_bootstraps = 1;
     
-    all_theta = zeros(n_bootstraps,length(theta_start));
-    all_errors = zeros(n_bootstraps, 1);
+    bs_theta = zeros(n_bootstraps,length(theta_start));
+    bs_errors = zeros(n_bootstraps, 1);
     factor = 1;
     factor = 1e5;
     [x,y,t] = get_dataset(dataset);
@@ -332,7 +340,7 @@ if get_errors
         random_indices = randi(n,n,1);
         sampled_dataset = complete_dataset(random_indices,:);
 
-        factor = 1e5;
+        factor = 1e3;
         objective_function = @(theta) optimize_model_bootstraps(theta, parameters, sampled_dataset, factor);
         % WITH GRADIENT
         options = optimoptions('fminunc', ...
@@ -351,8 +359,12 @@ if get_errors
 
         [theta, fval, exitflag, output, grad, hessian] = fminunc(objective_function, theta_start, options);
 
-        all_theta(i,:) = theta;
-        all_errors(i) = fval;
-        disp(result.squared_error)
+        bs_theta(i,:) = theta;
+        bs_errors(i) = fval;
+        save(filename, "bs_theta", "bs_errors", '-append');
     end
 end
+
+disp(toc)
+runtime = toc;
+save(filename, "runtime", '-append');
