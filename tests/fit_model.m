@@ -17,14 +17,14 @@ t = datetime;
 t.Format = 'yyyy-MM-dd_HH-mm';
 % choose whether to load or start
 load_data = false;
-get_errors = false;
+get_errors = true;
 
 %%
 if load_data == false
 
     number_of_averages = 50;
     dataset = 'all_wheat'; %options: 'cobo','pinhasi','all_wheat','maize'
-    layers = {'av'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
+    layers = {'av','tmean', 'sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
     directory = 'generated_data/';
 
     %create filename
@@ -313,14 +313,11 @@ save(filename, "result", '-append')
 %% Bootstrapp
 tic
 if get_errors
-    n_bootstraps = 50;
+    tic
+    n_bootstraps = 10;
     
-    bs_theta = zeros(n_bootstraps,length(theta_start));
-    bs_errors = zeros(n_bootstraps, 1);
-    factor = 1;
-    factor = 1e5;
-    [x,y,t] = get_dataset(dataset);
-    parameters =  data_prep(number_of_averages, active_layers, x, y, t);
+    all_theta = zeros(n_bootstraps,length(theta_start));
+    all_errors = zeros(n_bootstraps, 1);
     complete_dataset = parameters.dataset_idx;
     
     parameters.calculate_W = false;
@@ -335,7 +332,7 @@ if get_errors
     complete_dataset = parameters.dataset_idx;
     n = size(complete_dataset,1);
 
-    for i = 1:n_bootstraps
+    parfor i = 1:n_bootstraps
         rng(seeds(i));
         random_indices = randi(n,n,1);
         sampled_dataset = complete_dataset(random_indices,:);
@@ -357,14 +354,13 @@ if get_errors
             'OutputFcn', @saveIterations, ... % Call the custom function
             "UseParallel", false);
 
-        [theta, fval, exitflag, output, grad, hessian] = fminunc(objective_function, theta_start, options);
+        [theta, fval, exitflag, output, ~, ~] = fminunc(objective_function, theta_start, options);
 
         bs_theta(i,:) = theta;
         bs_errors(i) = fval;
-        save(filename, "bs_theta", "bs_errors", '-append');
+        
     end
+save(filename, "bs_theta", "bs_errors", '-append');
 end
-
-disp(toc)
 runtime = toc;
 save(filename, "runtime", '-append');
