@@ -5,7 +5,7 @@ clc
 % Add the directory containing run_model.m to the MATLAB path
 addpath('src');
 rng(12) % set random seed
-n_averages = [1,5,10,50,100,200,500,1000, 1000]; 
+n_averages = [1,5,10,50,100,200,500,1000,1000]; 
 
 theta_0 = 0.0;
 theta_1 = 0.0;
