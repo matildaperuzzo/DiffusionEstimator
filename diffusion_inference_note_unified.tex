@@ -1,0 +1,789 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1.1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{hyperref}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{times}
+
+\hypersetup{colorlinks=true, linkcolor=blue!60!black, citecolor=blue!60!black, urlcolor=blue!60!black}
+\setlist[enumerate]{itemsep=0.3em, topsep=0.4em}
+\setlist[itemize]{itemsep=0.3em, topsep=0.4em}
+
+\lstset{
+  language=Matlab,
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  breaklines=true,
+  keepspaces=true,
+  showstringspaces=false,
+  frame=single,
+  framerule=0.3pt,
+  rulecolor=\color{black!35},
+  xleftmargin=0.6em,
+  xrightmargin=0.6em,
+  aboveskip=0.8em,
+  belowskip=0.8em
+}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\R}{\mathbb{R}}
+
+\title{\textbf{Inference for a Simulated Spatial Diffusion Estimator}\\[0.35em]
+\large Analytical Sandwich Variance and Bootstrap Approaches}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\bigskip
+
+\section{Problem setup and estimator}
+
+Consider a spatial diffusion process observed at $L$ sites. Each site
+$\ell = 1, \ldots, L$ has known coordinates $s_\ell$ (or a mapping to grid
+cells) and an observed arrival time $Y_\ell$.
+
+Let $\theta \in \R^K$ denote the parameter vector of a stochastic diffusion
+simulator. For a given $\theta$, the simulator produces a simulated arrival
+(or adoption) time at site $\ell$ on simulation draw $n$:
+\[
+\hat Y_{\ell,n}(\theta), \qquad n=1,\ldots,N.
+\]
+Define the Monte Carlo (MC) average
+\begin{equation}
+\bar Y_{\ell,N}(\theta)
+= \frac{1}{N}\sum_{n=1}^N \hat Y_{\ell,n}(\theta).
+\label{eq:mcavg}
+\end{equation}
+The simulated nonlinear least squares (SNLS) estimator minimizes the mean
+squared error between observed and simulated arrival times:
+\begin{equation}
+\hat\theta_{L,N}
+= \argmin_{\theta \in \R^K}
+Q_{L,N}(\theta),
+\qquad
+Q_{L,N}(\theta)
+= \frac{1}{L}\sum_{\ell=1}^L \bigl(Y_\ell - \bar Y_{\ell,N}(\theta)\bigr)^2.
+\label{eq:criterion}
+\end{equation}
+This is also a special case of simulated method of moments (SMM) with an
+identity weighting matrix.
+
+It is often helpful to distinguish the large-$N$ ``oracle'' target
+\[
+\mu_\ell(\theta) := \E\bigl[\hat Y_{\ell,1}(\theta)\bigr]
+\]
+from the finite-$N$ approximation $\bar Y_{\ell,N}(\theta)$. Define oracle
+(respectively, feasible) residuals
+\[
+ e_\ell(\theta) := Y_\ell - \mu_\ell(\theta),
+\qquad
+ \hat e_\ell(\theta) := Y_\ell - \bar Y_{\ell,N}(\theta),
+\]
+and the oracle criterion
+\[
+\tilde Q_L(\theta) = \frac{1}{L}\sum_{\ell=1}^L e_\ell(\theta)^2.
+\]
+The oracle estimator is $\tilde\theta_L = \argmin_{\theta} \tilde Q_L(\theta)$.
+
+\begin{remark}[Two inferential targets]
+There are two natural inferential targets:
+\begin{itemize}
+  \item \textbf{Oracle (large-$N$) inference:} approximate the sampling distribution
+        of $\tilde\theta_L$ (as if $\mu_\ell(\theta)$ were known).
+  \item \textbf{Finite-$N$ inference:} approximate the sampling distribution of the
+        reported estimator $\hat\theta_{L,N}$, which includes MC error.
+\end{itemize}
+In many applications one chooses $N$ large enough that MC error is secondary
+and focuses on the oracle target.
+\end{remark}
+
+\section{Analytical variance: asymptotic normality and sandwich formula}
+
+\subsection{Jacobian and curvature}
+
+Let
+\[
+J_\ell(\theta) := \frac{\partial \mu_\ell(\theta)}{\partial \theta'} \in \R^{1\times K},
+\qquad
+J(\theta) := \begin{bmatrix}J_1(\theta)\\ \vdots \\ J_L(\theta)\end{bmatrix} \in \R^{L\times K}.
+\]
+A natural sample curvature matrix is the Gauss--Newton matrix
+\begin{equation}
+\hat\Gamma
+= \frac{1}{L} J(\hat\theta)'J(\hat\theta) \in \R^{K\times K}.
+\label{eq:gammahat}
+\end{equation}
+Its population counterpart is $\Gamma = \E[J_\ell(\theta_0)'J_\ell(\theta_0)]$.
+
+\subsection{Asymptotic variance}
+
+Define the oracle score contribution
+\[
+\psi_\ell(\theta_0)
+:= -2 e_\ell(\theta_0)\, J_\ell(\theta_0)' \in \R^K.
+\]
+Under standard regularity conditions for nonlinear least squares
+(identification, local smoothness of $\mu_\ell(\theta)$, nonsingularity of
+$\Gamma$, and either site independence or an appropriate weak-dependence/spatial
+mixing condition),
+\begin{equation}
+\sqrt{L}\,(\tilde\theta_L - \theta_0)
+\xrightarrow{d}
+\mathcal{N}(0, V),
+\qquad
+V = \Gamma^{-1} S\, \Gamma^{-1},
+\label{eq:asymnormal}
+\end{equation}
+where $S$ is the long-run variance of the score contributions.
+
+\paragraph{Site-i.i.d. (heteroskedastic) benchmark.}
+If sites are independent (but not necessarily homoskedastic), then
+\[
+S = \E\bigl[ e_\ell(\theta_0)^2\,J_\ell(\theta_0)'J_\ell(\theta_0)\bigr],
+\]
+and the plug-in estimator is
+\begin{equation}
+\hat S_{\mathrm{iid}}
+= \frac{1}{L} J(\hat\theta)' \operatorname{diag}(\hat e^2)\, J(\hat\theta).
+\label{eq:meat_iid}
+\end{equation}
+
+\paragraph{Homoskedastic shortcut.}
+If in addition $\E[e_\ell(\theta_0)^2 \mid X_\ell] = \sigma^2$ (strong), then
+$S=\sigma^2\Gamma$ and $V=\sigma^2\Gamma^{-1}$. A simple estimate is
+\begin{equation}
+\hat\sigma^2 = \frac{1}{L-K}\sum_{\ell=1}^L \hat e_\ell^2.
+\label{eq:sigma2hat}
+\end{equation}
+
+\paragraph{General sandwich variance.}
+Given any consistent estimator $\hat S$ of $S$, define
+\begin{equation}
+\widehat{\Var}(\tilde\theta_L)
+\approx \frac{1}{L}\, \hat\Gamma^{-1} \hat S\, \hat\Gamma^{-1}.
+\label{eq:varhat_general}
+\end{equation}
+The matrix $\hat\Gamma^{-1} \hat S\, \hat\Gamma^{-1}$ estimates the asymptotic
+variance of $\sqrt{L}(\tilde\theta_L-\theta_0)$; dividing by $L$ gives the
+variance of $\tilde\theta_L$.
+
+\subsection{Equivalent stacked notation}
+
+Some presentations write the ``meat'' in terms of a stacked covariance matrix.
+Let $g(\theta_0)=(g_1,\ldots,g_L)'$ where $g_\ell = Y_\ell-\mu_\ell(\theta_0)$.
+Then
+\[
+\Omega := \Var\bigl(g(\theta_0)\bigr) \in \R^{L\times L}.
+\]
+With $J(\theta_0)$ defined as above, the asymptotic variance can be written as
+\[
+V = \Gamma^{-1}\, \Bigl(\lim_{L\to\infty} \tfrac{1}{L}J(\theta_0)'\Omega J(\theta_0)\Bigr)\, \Gamma^{-1}.
+\]
+Under i.i.d. homoskedastic residuals, $\Omega=\sigma^2 I_L$ and the expression
+reduces to the homoskedastic shortcut.
+
+\subsection{Simulation noise and the role of $N$}
+
+At the true parameter, the feasible residual decomposes as
+\[
+\hat e_\ell(\theta_0)
+= \underbrace{\bigl(Y_\ell - \mu_\ell(\theta_0)\bigr)}_{\text{data / model error}}
+\;+
+\underbrace{\bigl(\mu_\ell(\theta_0) - \bar Y_{\ell,N}(\theta_0)\bigr)}_{\text{MC error}}.
+\]
+The MC error term has variance of order $1/N$.
+
+\begin{proposition}[Large-$N$ regime]
+If $L/N \to 0$ (equivalently $\sqrt{L/N}\to 0$), then MC error is asymptotically
+negligible relative to sampling error and
+\[
+\sqrt{L}(\hat\theta_{L,N}-\tilde\theta_L)=o_p(1).
+\]
+Consequently, $\hat\theta_{L,N}$ and $\tilde\theta_L$ share the same first-order
+limit distribution in \eqref{eq:asymnormal}.
+\end{proposition}
+
+\begin{remark}[Practical interpretation]
+In applications, $N$ is a computational tuning parameter.
+\begin{itemize}
+  \item If inference is meant to reflect uncertainty from the data (not from MC
+        approximation), choose $N$ large enough that MC error is small.
+  \item If one intentionally treats MC noise as part of the estimator, keep $N$
+        fixed and interpret inference as describing the finite-$N$ estimator.
+\end{itemize}
+\end{remark}
+
+\subsection{Spatial dependence across sites}
+
+Treating sites as independent draws can be inappropriate in a diffusion
+application. Spatial dependence can enter through shared measurement error,
+shared omitted variables, or misspecification that varies smoothly in space.
+If dependence is material, then the i.i.d. meat \eqref{eq:meat_iid} is not
+appropriate.
+
+Two practical dependence-robust alternatives are:
+\begin{itemize}
+  \item \textbf{Cluster / block robust sandwich.} Partition sites into spatial
+        clusters (grid blocks, regions, or distance-based clusters) and use a
+        cluster-robust meat.
+  \item \textbf{Spatial HAC (Conley-type).} Estimate $S$ by weighting
+        cross-products of score contributions by a distance kernel.
+\end{itemize}
+A cluster/block bootstrap (Section~\ref{sec:bootstrap}) is often the simplest
+way to obtain dependence-robust inference.
+
+\section{Bootstrap inference}
+\label{sec:bootstrap}
+
+Bootstrap inference re-estimates the model on resampled data. It can avoid
+explicit Jacobian estimation, produce non-normal confidence intervals, and can
+be more robust in small samples. Bootstrap validity still depends on matching
+spatial dependence.
+
+\subsection{Choice of resampling scheme}
+
+\paragraph{(i) Site (pairs) bootstrap.}
+Resample site indices $\ell\in\{1,\ldots,L\}$ with replacement and re-estimate.
+This is credible only if sites are approximately exchangeable after
+conditioning on the maintained model.
+
+\paragraph{(ii) Cluster / spatial block bootstrap.}
+Partition sites into spatial blocks or clusters and resample clusters with
+replacement. This preserves within-cluster dependence and is a reasonable
+default in spatial diffusion applications.
+
+\paragraph{(iii) Parametric bootstrap.}
+Simulate a full synthetic diffusion history from the fitted model, extract
+synthetic arrival times at the observed site locations, and re-estimate. This
+preserves the global dependence structure implied by the diffusion model but is
+model-based.
+
+\subsection{What distribution does the bootstrap approximate?}
+
+\paragraph{Large-$N$ (oracle) target.}
+If $L/N\to 0$ and the resampling scheme is valid for the dependence structure,
+then the bootstrap distribution of
+$\sqrt{L}(\hat\theta^*_{L,N}-\hat\theta_{L,N})$ approximates the sampling
+distribution of $\sqrt{L}(\tilde\theta_L-\theta_0)$.
+
+\paragraph{Finite-$N$ target.}
+If $N$ is not large, the bootstrap should mimic the actual reported estimator.
+A clean default is to set $N^*=N$ inside the bootstrap. Reducing $N^*$ is a
+computational shortcut that changes the estimator whose distribution is being
+approximated.
+
+\subsection{Confidence intervals}
+
+Let $\hat\theta^{*(b)}$ denote the estimate from bootstrap replication
+$b=1,\ldots,B$. For a scalar component $\hat\theta_k$:
+
+\begin{itemize}
+  \item \textbf{Bootstrap standard error:}
+  \[
+  \widehat{\mathrm{se}}^{\mathrm{boot}}_k
+  = \sqrt{\frac{1}{B-1}\sum_{b=1}^B\bigl(\hat\theta_k^{*(b)}-\bar\theta_k^*\bigr)^2},
+  \qquad \bar\theta_k^*=\frac{1}{B}\sum_{b=1}^B\hat\theta_k^{*(b)}.
+  \]
+
+  \item \textbf{Percentile interval:}
+  $[\hat\theta_k^{*(\alpha/2)},\,\hat\theta_k^{*(1-\alpha/2)}]$.
+
+  \item \textbf{Basic interval:}
+  $[2\hat\theta_k-\hat\theta_k^{*(1-\alpha/2)},\;2\hat\theta_k-\hat\theta_k^{*(\alpha/2)}]$.
+
+  \item \textbf{Normal interval:}
+  $\hat\theta_k \pm z_{1-\alpha/2}\,\widehat{\mathrm{se}}^{\mathrm{boot}}_k$.
+
+  \item \textbf{BCa interval:}
+  preferred when available and $B$ is large (software-supported).
+\end{itemize}
+
+\begin{remark}[Recommended default]
+For reporting, BCa is a strong generic default when available.
+When BCa is inconvenient, percentile or basic intervals are reasonable
+nonparametric defaults. Normal intervals are useful for compact summary tables
+but should not be expected to capture skewness.
+\end{remark}
+
+\subsection{Implementation rules}
+
+A robust bootstrap implementation should follow these rules:
+\begin{enumerate}
+  \item \textbf{Pass site coordinates explicitly.} The simulator should return
+        arrival times at a supplied list of coordinates. This avoids hidden
+        dependence on a global site ordering and makes repeated sites transparent.
+
+  \item \textbf{Use common random numbers (CRN) within each optimization.}
+        Within a given estimation run (original sample or bootstrap replication),
+        fix a seed vector $\{s_n\}_{n=1}^{N}$ and reuse it for every evaluation
+        of $Q_{L,N}(\theta)$ as $\theta$ varies.
+
+  \item \textbf{Use fresh seed vectors across replications when MC error is part of
+        the inferential target.} If the aim is to mimic a finite-$N$ estimator,
+        each replication should use its own seed vector. If MC error is negligible,
+        reusing the same seed vector across replications is acceptable.
+
+  \item \textbf{Reapply any data-dependent origin rule.} If the procedure selects
+        the diffusion origin(s) from the data (e.g. earliest observed site), apply
+        the same origin rule inside each replication.
+
+  \item \textbf{Track optimization failures.} Store exit flags, drop failed
+        replications, and report the effective number of successful replications
+        $B_{\mathrm{eff}}$.
+\end{enumerate}
+
+\section{MATLAB implementation templates}
+
+This section provides MATLAB templates implementing:
+(i) point estimation with CRN, (ii) analytical sandwich standard errors,
+and (iii) cluster/bootstrap inference.
+
+The code assumes you have a function
+\texttt{run\_simulator(theta, geo\_layers, origin, site\_coords)}
+that returns an $L\times 1$ vector of simulated arrival times at the supplied
+coordinates.
+
+\subsection{Seeded simulator wrappers}
+
+\begin{lstlisting}
+function Y = run_simulator_seeded(theta, geo_layers, origin, site_coords, seed)
+    rng(seed, 'twister');
+    Y = run_simulator(theta, geo_layers, origin, site_coords);
+end
+
+function Y_hat = simulate_average(theta, geo_layers, origin, site_coords, seeds)
+    N = numel(seeds);
+    for n = 1:N
+        Y_n = run_simulator_seeded(theta, geo_layers, origin, ...
+                                   site_coords, seeds(n));
+        if n == 1
+            L = numel(Y_n);
+            Y_sum = zeros(L, 1);
+        end
+        Y_sum = Y_sum + Y_n;
+    end
+    Y_hat = Y_sum / N;
+end
+\end{lstlisting}
+
+\subsection{Objective function with CRN}
+
+\begin{lstlisting}
+function mse = objective_crn(theta, Y_obs, geo_layers, origin, site_coords, seeds)
+    Y_hat = simulate_average(theta, geo_layers, origin, site_coords, seeds);
+    e = Y_obs - Y_hat;
+    mse = mean(e.^2);
+end
+\end{lstlisting}
+
+\subsection{Point estimation}
+
+\begin{lstlisting}
+theta0 = [-1.2; 0; 0];
+N_opt  = 1000;
+
+rng(24680, 'twister');
+seeds_obj = randi(2^31 - 1, N_opt, 1);
+
+opts = optimoptions('fminunc', ...
+    'Algorithm',           'quasi-newton', ...
+    'Display',             'iter', ...
+    'MaxIterations',       500, ...
+    'OptimalityTolerance', 1e-6, ...
+    'FiniteDifferenceType','central');
+
+obj = @(th) objective_crn(th, Y_obs, geo_layers, origin, ...
+                          site_coords, seeds_obj);
+
+[theta_hat, mse_hat, exitflag, output] = fminunc(obj, theta0, opts);
+\end{lstlisting}
+
+\subsection{Finite-difference Jacobian with CRN}
+
+Finite differences should reuse the same seed vector for $\theta+h e_k$ and
+$\theta-h e_k$.
+
+\begin{lstlisting}
+function J = estimate_jacobian_crn(theta_hat, geo_layers, origin, ...
+                                   site_coords, seeds_grad, h)
+    if nargin < 6 || isempty(h)
+        h = 1e-4;
+    end
+
+    K = numel(theta_hat);
+    Y0 = simulate_average(theta_hat, geo_layers, origin, ...
+                          site_coords, seeds_grad);
+    L = numel(Y0);
+    J = zeros(L, K);
+
+    for k = 1:K
+        step = h * max(abs(theta_hat(k)), 1);
+        th_p = theta_hat; th_m = theta_hat;
+        th_p(k) = th_p(k) + step;
+        th_m(k) = th_m(k) - step;
+
+        Yp = simulate_average(th_p, geo_layers, origin, ...
+                              site_coords, seeds_grad);
+        Ym = simulate_average(th_m, geo_layers, origin, ...
+                              site_coords, seeds_grad);
+
+        J(:, k) = (Yp - Ym) / (2 * step);
+    end
+end
+\end{lstlisting}
+
+\subsection{Sandwich variance assembly}
+
+\begin{lstlisting}
+function out = compute_variance(theta_hat, Y_obs, geo_layers, origin, ...
+                                site_coords, seeds_obj, seeds_grad)
+    K = numel(theta_hat);
+    L = numel(Y_obs);
+
+    Y_hat = simulate_average(theta_hat, geo_layers, origin, ...
+                             site_coords, seeds_obj);
+    e = Y_obs - Y_hat;
+    J = estimate_jacobian_crn(theta_hat, geo_layers, origin, ...
+                              site_coords, seeds_grad);
+
+    Gamma = (J' * J) / L;
+    if rcond(Gamma) < 1e-10
+        warning('Gamma is ill-conditioned; using pinv.');
+        Ginv = pinv(Gamma);
+    else
+        Ginv = Gamma \ eye(K);
+    end
+
+    % Heteroskedastic site-i.i.d. meat
+    Meat_iid = (J' * diag(e.^2) * J) / L;
+    V_iid = Ginv * Meat_iid * Ginv;      % var of sqrt(L)(theta_hat-theta0)
+    se_iid = sqrt(diag(V_iid) / L);      % SE for theta_hat
+
+    % Homoskedastic shortcut
+    sigma2 = (e' * e) / max(L - K, 1);
+    V_homo = sigma2 * Ginv;             % var of sqrt(L)(theta_hat-theta0)
+    se_homo = sqrt(diag(V_homo) / L);
+
+    out.resid = e;
+    out.J = J;
+    out.Gamma = Gamma;
+    out.Meat_iid = Meat_iid;
+    out.V_iid = V_iid;
+    out.se_iid = se_iid;
+    out.sigma2 = sigma2;
+    out.V_homo = V_homo;
+    out.se_homo = se_homo;
+end
+\end{lstlisting}
+
+\subsection{Cluster-robust meat and SE}
+
+\begin{lstlisting}
+function Meat_cluster = cluster_meat(J, e, cluster_id)
+    L = numel(e);
+    K = size(J, 2);
+    Meat_cluster = zeros(K, K);
+
+    groups = unique(cluster_id(:))';
+    for g = groups
+        idx = (cluster_id == g);
+        s_g = J(idx, :)' * e(idx);
+        Meat_cluster = Meat_cluster + s_g * s_g';
+    end
+
+    Meat_cluster = Meat_cluster / L;
+end
+\end{lstlisting}
+
+To convert the cluster meat into cluster-robust standard errors:
+
+\begin{lstlisting}
+Meat_cluster = cluster_meat(out_var.J, out_var.resid, cluster_id);
+K = numel(theta_hat);
+L = numel(Y_obs);
+Ginv = out_var.Gamma \ eye(K);
+V_cluster = Ginv * Meat_cluster * Ginv;  % var of sqrt(L)(theta_hat-theta0)
+se_cluster = sqrt(diag(V_cluster) / L);
+\end{lstlisting}
+
+\subsection{Simulation-noise diagnostic}
+
+A simple diagnostic checks whether MC error is small relative to the overall
+fit. It estimates the average diagonal variance of $\hat Y_{\ell,n}(\hat\theta)$
+across MC draws and reports an ``inflation ratio''.
+
+\begin{lstlisting}
+function rho = sim_inflation_ratio(theta_hat, Y_obs, geo_layers, origin, ...
+                                   site_coords, seeds_diag)
+    L = numel(Y_obs);
+    N = numel(seeds_diag);
+    Y_draws = zeros(L, N);
+
+    for n = 1:N
+        Y_draws(:, n) = run_simulator_seeded(theta_hat, geo_layers, ...
+                           origin, site_coords, seeds_diag(n));
+    end
+
+    Y_hat = mean(Y_draws, 2);
+    total_var = mean((Y_obs - Y_hat).^2);
+    sim_var_avgdiag = mean(var(Y_draws, 1, 2)) / N;  % population normalization
+    rho = sim_var_avgdiag / total_var;
+
+    fprintf('Simulation inflation ratio (avg diagonal): %.3f\n', rho);
+end
+\end{lstlisting}
+
+Large values of $\rho$ suggest increasing $N$.
+
+\subsection{Origin-selection helper}
+
+\begin{lstlisting}
+function origin_b = choose_origin(coords_b, Y_b, origin_rule, origin_fixed)
+    switch lower(origin_rule)
+        case 'fixed'
+            origin_b = origin_fixed;
+        case 'earliest'
+            [~, i0] = min(Y_b);
+            origin_b = coords_b(i0, :);
+        otherwise
+            error('Unknown origin_rule. Customize for your application.');
+    end
+end
+\end{lstlisting}
+
+\subsection{Generic cluster bootstrap with CRN}
+
+The routine below implements site bootstrap as the special case
+\texttt{cluster\_id = (1:L)'}. For a spatial block bootstrap, set
+\texttt{cluster\_id} to geographic block labels.
+
+\begin{lstlisting}
+function out = run_cluster_bootstrap(theta_hat, Y_obs, site_coords, ...
+                                     cluster_id, geo_layers, ...
+                                     origin_rule, origin_fixed, ...
+                                     B, N_boot, alpha)
+    K = numel(theta_hat);
+    theta_boot = NaN(K, B);
+    exitflag_boot = NaN(B, 1);
+
+    opts = optimoptions('fminunc', ...
+        'Algorithm',           'quasi-newton', ...
+        'Display',             'off', ...
+        'MaxIterations',       300, ...
+        'OptimalityTolerance', 1e-5, ...
+        'FiniteDifferenceType','central');
+
+    groups = unique(cluster_id(:), 'stable');
+    G = numel(groups);
+    cluster_list = cell(G, 1);
+    for g = 1:G
+        cluster_list{g} = find(cluster_id == groups(g));
+    end
+
+    rng(12345, 'twister');
+    draw_bank = randi(G, G, B);               % resampling draws
+    seed_bank = randi(2^31 - 1, N_boot, B);  % CRN seed vectors
+
+    parfor b = 1:B
+        draw_idx = draw_bank(:, b);
+        idx = vertcat(cluster_list{draw_idx});
+
+        Y_b = Y_obs(idx);
+        coords_b = site_coords(idx, :);
+        origin_b = choose_origin(coords_b, Y_b, origin_rule, origin_fixed);
+        seeds_b = seed_bank(:, b);
+
+        obj_b = @(th) objective_crn(th, Y_b, geo_layers, origin_b, ...
+                                   coords_b, seeds_b);
+        [theta_b, ~, exitflag] = fminunc(obj_b, theta_hat, opts);
+
+        if exitflag > 0
+            theta_boot(:, b) = theta_b;
+        end
+        exitflag_boot(b) = exitflag;
+    end
+
+    success = all(isfinite(theta_boot), 1);
+    B_eff = nnz(success);
+    if B_eff < B
+        warning(['%d of %d bootstrap replications failed and were dropped.'], ...
+                 B - B_eff, B);
+    end
+    if B_eff < 50
+        error('Too few successful bootstrap replications.');
+    end
+
+    theta_ok = theta_boot(:, success);
+    se_boot = std(theta_ok, 0, 2);
+    q_lo = quantile(theta_ok, alpha / 2, 2);
+    q_hi = quantile(theta_ok, 1 - alpha / 2, 2);
+
+    ci.pct = [q_lo, q_hi];
+    ci.basic = [2 * theta_hat - q_hi, 2 * theta_hat - q_lo];
+
+    z = norminv(1 - alpha / 2);
+    ci.norm = [theta_hat - z * se_boot, theta_hat + z * se_boot];
+
+    out.theta_boot = theta_boot;
+    out.se_boot = se_boot;
+    out.ci = ci;
+    out.success = success;
+    out.exitflag = exitflag_boot;
+    out.B_eff = B_eff;
+end
+\end{lstlisting}
+
+\subsection{Reporting helper}
+
+\begin{lstlisting}
+function report_bootstrap(theta_hat, out, param_names)
+    fprintf('\nSuccessful bootstrap replications: %d\n', out.B_eff);
+    fprintf('%s\n', repmat('-', 1, 84));
+    fprintf('%-18s %10s %10s %20s %20s\n', ...
+        'Parameter', 'Estimate', 'SE boot', '95% CI basic', '95% CI pct');
+    fprintf('%s\n', repmat('-', 1, 84));
+
+    for k = 1:numel(theta_hat)
+        fprintf('%-18s %10.4f %10.4f [%7.4f,%7.4f] [%7.4f,%7.4f]\n', ...
+            param_names{k}, theta_hat(k), out.se_boot(k), ...
+            out.ci.basic(k, 1), out.ci.basic(k, 2), ...
+            out.ci.pct(k, 1), out.ci.pct(k, 2));
+    end
+    fprintf('%s\n', repmat('-', 1, 84));
+end
+\end{lstlisting}
+
+\subsection{Bootstrap convergence diagnostic}
+
+A simple diagnostic plots the running bootstrap SE as the number of successful
+replications increases.
+
+\begin{lstlisting}
+function check_bootstrap_convergence(theta_boot_ok)
+    [K, B_eff] = size(theta_boot_ok);
+    se_running = NaN(K, B_eff);
+
+    for b = 2:B_eff
+        se_running(:, b) = std(theta_boot_ok(:, 1:b), 0, 2);
+    end
+
+    figure;
+    for k = 1:K
+        subplot(K, 1, k);
+        plot(2:B_eff, se_running(k, 2:end), 'LineWidth', 1.5);
+        xlabel('Successful bootstrap replications');
+        ylabel(sprintf('SE(theta_%d)', k));
+        title(sprintf('Running bootstrap SE for parameter %d', k));
+        grid on;
+    end
+end
+\end{lstlisting}
+
+\subsection{Main script skeleton}
+
+\begin{lstlisting}
+%% User choices
+param_names = {'theta_0', 'theta_sea', 'theta_prec'};
+alpha = 0.05;
+B = 999;
+
+N_opt  = 1000;
+N_boot = N_opt;  % recommended default: N_boot = N_opt
+
+% For site bootstrap use cluster_id = (1:numel(Y_obs))'.
+% For spatial bootstrap replace this by block/cluster labels.
+cluster_id = (1:numel(Y_obs))';
+
+% Origin selection
+origin_rule  = 'fixed';
+origin_fixed = origin;
+% origin_rule  = 'earliest';
+% origin_fixed = [];
+
+%% Point estimate
+rng(24680, 'twister');
+seeds_obj = randi(2^31 - 1, N_opt, 1);
+origin_base = choose_origin(site_coords, Y_obs, origin_rule, origin_fixed);
+
+obj = @(th) objective_crn(th, Y_obs, geo_layers, origin_base, ...
+                          site_coords, seeds_obj);
+[theta_hat, mse_hat] = fminunc(obj, theta0, opts);
+
+%% Analytical sandwich SE (optional)
+rng(13579, 'twister');
+seeds_grad = randi(2^31 - 1, 3000, 1);
+out_var = compute_variance(theta_hat, Y_obs, geo_layers, origin_base, ...
+                           site_coords, seeds_obj, seeds_grad);
+
+%% Optional simulation-noise diagnostic
+rng(54321, 'twister');
+seeds_diag = randi(2^31 - 1, 1000, 1);
+rho = sim_inflation_ratio(theta_hat, Y_obs, geo_layers, origin_base, ...
+                          site_coords, seeds_diag);
+
+%% Bootstrap
+out_boot = run_cluster_bootstrap(theta_hat, Y_obs, site_coords, ...
+                                 cluster_id, geo_layers, ...
+                                 origin_rule, origin_fixed, ...
+                                 B, N_boot, alpha);
+
+theta_ok = out_boot.theta_boot(:, out_boot.success);
+check_bootstrap_convergence(theta_ok);
+report_bootstrap(theta_hat, out_boot, param_names);
+\end{lstlisting}
+
+\section{Reporting guidance}
+
+\begin{itemize}
+  \item \textbf{Choose $N$ to control MC error.} If inference is intended to reflect
+        uncertainty from the data, increase $N$ until MC variation in
+        $\bar Y_{\ell,N}(\hat\theta)$ is small relative to residual variation.
+        The inflation diagnostic above is one practical check.
+
+  \item \textbf{Prefer cluster/block procedures when spatial dependence is plausible.}
+        In diffusion applications, this is often more credible than treating sites
+        as independent.
+
+  \item \textbf{Use $B\ge 999$ for final nonparametric intervals.} Smaller $B$ can be
+        used for debugging.
+
+  \item \textbf{Transform parameters by transforming draws.} If reporting a transformed
+        object (e.g., an implied speed), apply the transformation to each bootstrap
+        draw and then compute quantiles.
+\end{itemize}
+
+\section{Summary}
+
+Analytical (sandwich) inference and bootstrap inference are both natural for
+simulation-based diffusion estimators.
+
+\begin{itemize}
+  \item The analytical approach is compact and can be fast once a stable Jacobian
+        estimate is available. It requires careful attention to (i) Jacobian
+        computation (finite differences with CRN), (ii) the dependence structure
+        across sites, and (iii) the role of simulation size $N$.
+
+  \item The bootstrap approach avoids explicit Jacobians and supports non-normal
+        intervals, but still requires choosing a resampling scheme that matches
+        spatial dependence (site vs block/cluster) and handling simulation seeds
+        carefully.
+\end{itemize}
+
+In both approaches, using common random numbers within each optimization run is
+crucial for numerical stability.
+
+\end{document}

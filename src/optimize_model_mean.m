@@ -19,7 +19,7 @@ function result = optimize_function_mean(theta,parameters)
         for s = 1:length(sweeps)
             new_theta = theta;
             new_theta(i) = theta(i) + sweeps(s);
-            obj_functions(end+1) = run_model(parameters,theta).squared_error;
+            obj_functions(end+1) = run_model(parameters, new_theta).squared_error;
         end
     end
     result = mean(obj_functions);
