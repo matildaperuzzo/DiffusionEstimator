@@ -27,6 +27,14 @@ function [best_theta, best_result, info] = grad_descent(theta0, parameters, opti
 
     can_parallel = use_parallel && has_parallel_toolbox();
     if can_parallel
+        pool = gcp('nocreate');
+        if isempty(pool)
+            parpool('local', n_starts);
+        elseif pool.NumWorkers ~= n_starts
+            delete(pool);
+            parpool('local', n_starts);
+        end
+        
         parfor start_idx = 1:n_starts
             start_theta = start_points(start_idx, :);
             [theta_i, result_i, info_i] = grad_descent_sweep(start_theta, parameters, options);
