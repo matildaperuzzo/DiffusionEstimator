@@ -73,36 +73,51 @@ function val = get_opt(options, field_name, default_val)
 end
 
 function start_points = sample_start_points_on_ellipse(center, axes_lengths, n_points)
-    min_gap = 0.6 * (2 * pi / n_points);
+    n_dims = numel(center);
+    center = reshape(center, 1, []);
+    axes_lengths = reshape(axes_lengths, 1, []);
+
+    if n_dims == 1
+        offsets = linspace(-axes_lengths(1), axes_lengths(1), n_points)';
+        start_points = center + offsets;
+        return;
+    end
+
+    min_angle = min(pi / 3, 0.7 * pi / max(n_points, 2));
     max_tries = 5000;
-    angles = zeros(n_points, 1);
+    directions = zeros(n_points, n_dims);
 
     for point_idx = 1:n_points
         accepted = false;
         for try_idx = 1:max_tries
-            candidate = 2 * pi * rand();
+            candidate = randn(1, n_dims);
+            candidate_norm = norm(candidate);
+            if candidate_norm == 0
+                continue;
+            end
+            candidate = candidate / candidate_norm;
+
             if point_idx == 1
                 accepted = true;
             else
-                gaps = abs(wrap_to_pi_local(candidate - angles(1:point_idx - 1)));
-                accepted = all(gaps >= min_gap);
+                cos_angles = directions(1:point_idx - 1, :) * candidate';
+                cos_angles = min(max(cos_angles, -1), 1);
+                accepted = all(acos(cos_angles) >= min_angle);
             end
 
             if accepted
-                angles(point_idx) = candidate;
+                directions(point_idx, :) = candidate;
                 break;
             end
         end
 
         if ~accepted
-            angles = linspace(0, 2 * pi, n_points + 1)';
-            angles(end) = [];
+            directions = fallback_directions(n_points, n_dims);
             break;
         end
     end
 
-    angles = sort(angles);
-    start_points = center + [axes_lengths(1) * cos(angles), axes_lengths(2) * sin(angles)];
+    start_points = center + directions .* axes_lengths;
 end
 
 function [start_points, meta] = default_start_points(theta0, parameters, n_starts, variance_scale)
@@ -119,8 +134,12 @@ function [start_points, meta] = default_start_points(theta0, parameters, n_start
     meta.source = 'compute_variance';
 end
 
-function wrapped = wrap_to_pi_local(values)
-    wrapped = mod(values + pi, 2 * pi) - pi;
+function directions = fallback_directions(n_points, n_dims)
+    directions = zeros(n_points, n_dims);
+    basis = [eye(n_dims); -eye(n_dims)];
+    for idx = 1:n_points
+        directions(idx, :) = basis(mod(idx - 1, size(basis, 1)) + 1, :);
+    end
 end
 
 function tf = has_parallel_toolbox()
