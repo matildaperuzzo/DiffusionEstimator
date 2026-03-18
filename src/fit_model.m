@@ -1,7 +1,7 @@
-function state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_load)
+function state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_load, bootstrap_type, bootstrap_group_size, n_bootstraps)
 %FIT_MODEL Resumable fitting pipeline extracted from tests/fit_model.m.
 %   state = fit_model(crop, layers)
-%   state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_load)
+%   state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_load, bootstrap_type, bootstrap_group_size, n_bootstraps)
 %
 %   Required inputs:
 %     crop   - dataset/crop name, e.g. 'cobo'
@@ -11,8 +11,11 @@ function state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_l
 %     do_bootstraps - logical, whether to run bootstrap re-estimation
 %     file_to_load  - MAT file to resume from
 %     level_to_load - level to resume from inside the loaded file
+%     bootstrap_type - 'iid' or 'knn_cluster'
+%     bootstrap_group_size - group size for the KNN cluster bootstrap
+%     n_bootstraps - number of bootstrap iterations to run
 
-    narginchk(2, 5);
+    narginchk(2, 8);
 
     if nargin < 3 || isempty(do_bootstraps)
         do_bootstraps = false;
@@ -22,6 +25,15 @@ function state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_l
     end
     if nargin < 5
         level_to_load = [];
+    end
+    if nargin < 6 || isempty(bootstrap_type)
+        bootstrap_type = 'iid';
+    end
+    if nargin < 7 || isempty(bootstrap_group_size)
+        bootstrap_group_size = 10;
+    end
+    if nargin < 8 || isempty(n_bootstraps)
+        n_bootstraps = 100;
     end
 
     if ischar(layers) || isstring(layers)
@@ -127,12 +139,15 @@ function state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_l
     end
 
     if do_bootstraps
-        [bs_theta, bs_errors, bootstrap_options] = run_bootstrap_stage(theta_start, parameters, factors);
-        save(filename, 'bs_theta', 'bs_errors', '-append');
+        [bs_theta, bs_errors, bootstrap_options, bootstrap_info] = ...
+            run_bootstrap_stage(theta_optim, parameters, result, factors, bootstrap_type, bootstrap_group_size, n_bootstraps);
+        save(filename, 'bs_theta', 'bs_errors', 'bootstrap_options', 'bootstrap_info', '-append');
     elseif ~load_data
         bootstrap_options = struct();
+        bootstrap_info = struct();
     else
         bootstrap_options = get_loaded(loaded, 'bootstrap_options', struct());
+        bootstrap_info = get_loaded(loaded, 'bootstrap_info', struct());
     end
 
     runtime = toc;
@@ -155,6 +170,10 @@ function state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_l
     state.bs_errors = bs_errors;
     state.optimizer_options = optimizer_options;
     state.bootstrap_options = bootstrap_options;
+    state.bootstrap_info = bootstrap_info;
+    state.bootstrap_type = bootstrap_type;
+    state.bootstrap_group_size = bootstrap_group_size;
+    state.n_bootstraps = n_bootstraps;
     state.runtime = runtime;
 end
 
@@ -241,8 +260,23 @@ function options = create_grad_descent_options(parameters, factor)
     options.debug = false;
 end
 
-function [bs_theta, bs_errors, bootstrap_options] = run_bootstrap_stage(theta_start, parameters, factor)
-    n_bootstraps = 100;
+function [bs_theta, bs_errors, bootstrap_options, bootstrap_info] = run_bootstrap_stage(theta_start, parameters, result, factor, bootstrap_type, bootstrap_group_size, n_bootstraps)
+    bootstrap_type = lower(string(bootstrap_type));
+    if bootstrap_type == "iid"
+        [bs_theta, bs_errors, bootstrap_options] = run_iid_bootstrap_stage(theta_start, parameters, factor, n_bootstraps);
+        bootstrap_info = struct('type', 'iid', 'group_size', NaN, 'n_bootstraps', n_bootstraps);
+    elseif bootstrap_type == "knn_cluster"
+        base_options = create_grad_descent_options(parameters, factor);
+        [bs_theta, bs_errors, bootstrap_options, cluster_info] = run_knn_cluster_bootstrap( ...
+            theta_start, parameters, result.errors, base_options, factor, bootstrap_group_size, n_bootstraps);
+        bootstrap_info = struct('type', 'knn_cluster', 'group_size', bootstrap_group_size, ...
+            'n_bootstraps', n_bootstraps, 'cluster_info', cluster_info);
+    else
+        error('Unknown bootstrap_type: %s. Use ''iid'' or ''knn_cluster''.', bootstrap_type);
+    end
+end
+
+function [bs_theta, bs_errors, bootstrap_options] = run_iid_bootstrap_stage(theta_start, parameters, factor, n_bootstraps)
     bs_theta = zeros(n_bootstraps, numel(theta_start));
     bs_errors = zeros(n_bootstraps, 1);
     complete_dataset = parameters.dataset_idx;

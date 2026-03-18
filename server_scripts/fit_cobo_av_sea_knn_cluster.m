@@ -6,4 +6,4 @@ repo_root = fileparts(script_dir);
 cd(repo_root);
 addpath(fullfile(repo_root, 'src'));
 
-fit_model('cobo', {'av', 'sea'}, true, "", [], 'iid', 10);
+fit_model('cobo', {'av', 'sea'}, true, "", [], 'knn_cluster', 10, 100);
