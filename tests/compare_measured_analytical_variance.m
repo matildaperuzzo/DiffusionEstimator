@@ -10,7 +10,8 @@ sweep_file = fullfile(repo_root, 'generated_data', 'cobo_sweep_2d.mat');
 fit_file = fullfile(repo_root, 'generated_data', 'sweep_grad_descent', ...
     'cobo_av_sea_100av_2026-03-17_13-23.mat');
 
-fit_radius = 4;
+fit_radius = 15;
+% plot_clim = [7.48e5,7.8e5];
 plot_clim = [1.425e6, 1.45e6];
 contour_scale = 1.0;
 
@@ -32,6 +33,11 @@ all_errors = sweep_data.all_errors;
 theta_0 = sweep_data.theta_0(:);
 theta_1 = sweep_data.theta_1(:);
 parameters = fit_data.parameters;
+if isfield(fit_data, 'bs_theta')
+    bs_theta = fit_data.bs_theta;
+else
+    bs_theta = [];
+end
 
 if isfield(fit_data, 'crop')
     crop_name = string(fit_data.crop);
@@ -61,6 +67,14 @@ local_errors = all_errors(row_window, col_window);
 x = T0(:) - theta_hat(1);
 y = T1(:) - theta_hat(2);
 z = local_errors(:);
+
+theta_0_step = median(diff(theta_0));
+theta_1_step = median(diff(theta_1));
+fit_window_position = [
+    theta_0(row_window(1)) - theta_0_step / 2, ...
+    theta_1(col_window(1)) - theta_1_step / 2, ...
+    (theta_0(row_window(end)) - theta_0(row_window(1))) + theta_0_step, ...
+    (theta_1(col_window(end)) - theta_1(col_window(1))) + theta_1_step];
 
 design = [ones(size(x)), x, y, x.^2, x .* y, y.^2];
 beta = design \ z;
@@ -107,8 +121,16 @@ plot(measured_x, measured_y, 'r-', 'LineWidth', 2, ...
     'DisplayName', 'Measured ellipse');
 plot(analytical_x, analytical_y, 'k--', 'LineWidth', 2, ...
     'DisplayName', 'Analytical ellipse');
-scatter(T0(:), T1(:), 35, 'MarkerFaceColor', [1 1 1], 'MarkerEdgeColor', 'k', ...
-    'DisplayName', 'Quadratic fit window');
+rectangle('Position', fit_window_position, 'EdgeColor', 'w', 'LineWidth', 2, ...
+    'LineStyle', '-');
+plot(NaN, NaN, 'w-', 'LineWidth', 2, 'DisplayName', 'Quadratic fit window');
+if ~isempty(bs_theta)
+    valid_bs = all(isfinite(bs_theta), 2) & isfinite(fit_data.bs_errors(:));
+    scatter(bs_theta(valid_bs, 1), bs_theta(valid_bs, 2), 24, ...
+        fit_data.bs_errors(valid_bs), 'filled', ...
+        'MarkerEdgeColor', 'k', ...
+        'DisplayName', 'Bootstrap thetas');
+end
 xlabel('\theta_1');
 ylabel('\theta_2');
 title(sprintf('Measured vs analytical variance: %s', crop_name));
