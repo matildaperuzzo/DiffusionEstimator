@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=150G
-#SBATCH --time=45:00:00
+#SBATCH --time=24:00:00
 #SBATCH --output='fit_maize_sweep_grad_descent_rerun.out'
 #SBATCH --error='fit_maize_sweep_grad_descent_rerun.err'
 
