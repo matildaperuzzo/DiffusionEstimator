@@ -62,10 +62,10 @@ end
 end
 
 function best_error = get_best_error(fit)
-if isfield(fit, 'min_error') && ~isempty(fit.min_error)
-    best_error = fit.min_error;
-elseif isfield(fit, 'result') && isfield(fit.result, 'squared_error')
+if isfield(fit, 'result') && isfield(fit.result, 'squared_error')
     best_error = fit.result.squared_error;
+elseif isfield(fit, 'min_error') && ~isempty(fit.min_error)
+    best_error = fit.min_error;
 else
     best_error = NaN;
 end

@@ -67,7 +67,13 @@ function state = fit_model(crop, layers, do_bootstraps, file_to_load, level_to_l
         variance_info = get_loaded(loaded, 'variance_info', []);
 
         if ~isempty(level_to_load)
-            level = level_to_load;
+            requested_level = level_to_load;
+            if level < requested_level
+                fprintf('Loaded file level %d is below requested level %d. Resuming from level %d instead.\n', ...
+                    level, requested_level, level);
+            else
+                level = requested_level;
+            end
         end
     else
         t = datetime;

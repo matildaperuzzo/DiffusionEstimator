@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#SBATCH --account=dschonho_1760
+#SBATCH --partition=main
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=150G
+#SBATCH --time=45:00:00
+#SBATCH --output='fit_cobo_sweep_grad_descent_rerun.out'
+#SBATCH --error='fit_cobo_sweep_grad_descent_rerun.err'
+
+module purge
+module load matlab/2024a
+
+matlab -batch "fit_cobo_sweep_grad_descent_rerun"

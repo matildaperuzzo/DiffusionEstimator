@@ -22,7 +22,7 @@ vmax = 110.567 / 2 / 4;
 sizes = [4, 4, 4];
 
 f = figure();
-f.Position = [100 100 400 460];
+f.Position = [100 100 400 560];
 
 subplot(5, 5, 2:10);
 hold on;

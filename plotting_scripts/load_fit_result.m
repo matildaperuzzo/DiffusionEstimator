@@ -6,11 +6,15 @@ if ~isfield(fit, 'parameters') || ~isfield(fit, 'theta_optim')
 end
 
 if ~isfield(fit, 'result')
-    fit.result = run_model(fit.parameters, fit.theta_optim);
+    result = run_model(fit.parameters, fit.theta_optim);
+    fit.result = result;
+    save(file, 'result', '-append')
 end
 
 if ~isfield(fit, 'variance_info') || isempty(fit.variance_info)
-    fit.variance_info = compute_variance(fit.theta_optim, fit.parameters);
+    variance_info = compute_variance(fit.theta_optim, fit.parameters);
+    fit.variance_info = variance_info;
+    save(file,"variance_info",'-append')
 end
 
 if ~isfield(fit, 'bs_theta')

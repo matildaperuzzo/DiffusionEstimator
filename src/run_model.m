@@ -42,15 +42,11 @@ function result = run_model(parameters, theta, dataset)
         W = 0;
     end
 
-    if isfield(parameters,'random')
-        rng(parameters.random)
-    else
-        rng(12)
-    end
+    stream = create_random_stream(parameters);
     data_times = data(:,3);
 
     for rep = 1:n_reps
-        U = rand(size(A_start)).*parameters.W;
+        U = rand(stream, size(A_start)).*parameters.W;
         % Run the model for each instance
         if calculate_W == false
             [A, exfl1] = run_model_av(A_start, nt, theta, X, U, active_layers);
@@ -99,6 +95,38 @@ function result = run_model(parameters, theta, dataset)
         W = W*W';
         result.W = W / n_data;
     end
+end
+
+function stream = create_random_stream(parameters)
+    if isfield(parameters, 'random')
+        random_setting = parameters.random;
+    else
+        random_setting = 12;
+    end
+
+    if (isstring(random_setting) && isscalar(random_setting)) || ischar(random_setting)
+        if strcmpi(char(random_setting), 'shuffle')
+            stream = RandStream('Threefry', 'Seed', shuffled_seed());
+            return;
+        end
+        error('run_model:InvalidRandomSetting', ...
+            'parameters.random must be numeric or ''shuffle''.');
+    end
+
+    validateattributes(random_setting, {'numeric'}, ...
+        {'scalar', 'integer', 'finite', 'nonnegative'}, mfilename, 'parameters.random');
+    stream = RandStream('Threefry', 'Seed', double(random_setting));
+end
+
+function seed = shuffled_seed()
+    worker = getCurrentTask();
+    worker_offset = 0;
+    if ~isempty(worker)
+        worker_offset = worker.ID;
+    end
+
+    timestamp = posixtime(datetime('now', 'TimeZone', 'UTC'));
+    seed = mod(floor(timestamp * 1e6) + worker_offset, 2^32 - 1);
 end
 
 

@@ -1,5 +1,5 @@
 function file = get_recent_fit_file(repo_root, crop, layers)
-directory = fullfile(repo_root, 'generated_data');
+directory = repo_root;
 
 if nargin < 3
     layers = {};

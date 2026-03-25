@@ -7,8 +7,8 @@ addpath(script_dir);
 addpath(fullfile(repo_root, 'src'));
 
 fprintf('Building filename database from generated_data\n');
-database = build_filename_database_impl(repo_root, true);
-save(fullfile(repo_root, 'generated_data', 'filename_database.mat'), 'database');
+database = build_filename_database_impl(fullfile(repo_root,'generated_data','sweep_grad_descent'), true);
+save(fullfile(repo_root, 'generated_data', 'sweep_grad_descent', 'filename_database.mat'), 'database');
 fprintf('Saved database to %s\n', fullfile(repo_root, 'generated_data', 'filename_database.mat'));
 
 labels = cell(numel(database), 1);

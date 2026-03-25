@@ -8,7 +8,7 @@ addpath(fullfile(repo_root, 'src'));
 % Swap these two paths to compare a different 2D run.
 sweep_file = fullfile(repo_root, 'generated_data', 'cobo_sweep_2d.mat');
 fit_file = fullfile(repo_root, 'generated_data', 'sweep_grad_descent', ...
-    'cobo_av_sea_100av_2026-03-17_13-23.mat');
+    'cobo_av_sea_100av_2026-03-20_05-16.mat');
 
 fit_radius = 15;
 % plot_clim = [7.48e5,7.8e5];
