@@ -41,10 +41,10 @@ for i = 1:numel(database)
             [value, se] = get_velocity_stat(fit, 'baseline', vmax);
             y = 3 + offset(c);
         elseif isequal(entry.layers, {'sea'})
-            [value, se] = get_velocity_stat(fit, 'sea_only', vmax);
+            [value, se] = get_velocity_stat(fit, 'baseline', vmax);
             y = 2 + offset(c);
         elseif numel(entry.layers) == 2 && any(strcmp(entry.layers, 'prec')) && any(strcmp(entry.layers, 'sea'))
-            [value, se] = get_velocity_stat(fit, 'difference', vmax);
+            [value, se] = get_velocity_stat(fit, 'baseline', vmax);
             y = 1 + offset(c);
         else
             continue
@@ -63,10 +63,12 @@ xlim([-2 8]);
 xticks([0 5]);
 yticks([1 2 3]);
 xline(0, '--k');
-legend(legend_handles, {'wheat', 'rice', 'maize'}, 'Location', 'northeast');
+legend(legend_handles, {'wheat', 'rice', 'maize'}, 'Location', 'northeast', 'Interpreter','latex');
 grid on;
 yticklabels({'sea and precipitation', 'sea only', 'baseline model'});
-xlabel('average velocity (km/decade)');
+set(gca,"TickLabelInterpreter",'latex')
+xlabel('average velocity (km/decade)', 'Interpreter','latex');
+set(gca, 'Units', 'normalized', 'Position', [0.25 0.7 0.7 0.25])  % [left bottom width height]
 
 subplot(5, 5, 12:25);
 hold on;
@@ -92,9 +94,11 @@ xlim([-10 10]);
 xticks([-5 0 5]);
 yticks(1:5);
 yticklabels({'anisotropy', 'crop suitability', 'rivers', 'precipitation', 'mean temperature'});
+set(gca,"TickLabelInterpreter",'latex')
 xline(0, '--k');
 grid on;
-xlabel('velocity difference (km/decade)');
+xlabel('velocity difference (km/decade)', 'Interpreter','latex');
+set(gca, 'Units', 'normalized', 'Position', [0.25 0.1 0.7 0.5], 'FontSize', 8)  % [left bottom width height]
 
 function entry = find_entry(database, dataset, layers)
 entry = [];
@@ -106,3 +110,5 @@ for k = 1:numel(database)
     end
 end
 end
+
+exportgraphics(gcf,'saved_plots/estimates.pdf','ContentType','vector')

@@ -50,7 +50,7 @@ octave-workspace
 # ignore all images
 *.png
 *.jpg
-*.pdf
+# *.pdf
 *.gif
 *.fig
 *.svg
@@ -59,9 +59,12 @@ octave-workspace
 # ignore data/raw folder
 data/raw/
 generated_data/.*
-saved_plots/.*
+
 
 
 # ignore output files 
 *.out
 *.sh
+
+# ignore compressed files
+*.zip
