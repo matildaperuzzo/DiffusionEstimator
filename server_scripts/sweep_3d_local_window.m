@@ -3,7 +3,7 @@ clc;
 
 script_dir = fileparts(mfilename('fullpath'));
 repo_root = fileparts(script_dir);
-data_path = fullfile(repo_root, 'generated_data', 'sweep_grad_descent');
+data_path = fullfile(repo_root, 'generated_data');
 
 cd(repo_root);
 addpath(fullfile(repo_root, 'src'));
