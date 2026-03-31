@@ -155,7 +155,9 @@ function [exfl1,a] = step(a, theta, X, U, active_layers)
         theta_ind = theta_ind + 1;
     end
     if active_layers(2)
-        M = M + theta(theta_ind)*Fe|Fw;
+        ew_mask = double(Fe | Fw);
+        ns_mask = double(Fn | Fs);
+        M = M + theta(theta_ind) * (ew_mask - ns_mask);
         theta_ind = theta_ind + 1;
     end
     for layer = active_layers(3:end)
