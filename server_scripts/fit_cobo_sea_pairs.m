@@ -8,10 +8,10 @@ addpath(fullfile(repo_root, 'src'));
 
 layer_pairs = {
     {'av', 'asym', 'sea'}
-    {'av', 'csi', 'sea'}
-    {'av', 'hydro', 'sea'}
-    {'av', 'prec', 'sea'}
-    {'av', 'tmean', 'sea'}
+    % {'av', 'csi', 'sea'}
+    % {'av', 'hydro', 'sea'}
+    % {'av', 'prec', 'sea'}
+    % {'av', 'tmean', 'sea'}
 };
 
 for i = 1:size(layer_pairs, 1)
