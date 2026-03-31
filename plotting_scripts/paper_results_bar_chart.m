@@ -18,7 +18,7 @@ load(database_file, 'database');
 target_layers = {
     {'av'}
     {'sea'}
-    {'asym', 'sea'}
+    % {'asym', 'sea'}
     {'csi', 'sea'}
     {'hydro', 'sea'}
     {'prec', 'sea'}
@@ -47,7 +47,7 @@ f.Position = [100 100 800 180];
 tiledlayout(1, 3, 'Padding', 'none', 'TileSpacing', 'compact');
 
 cmap = slanCM('romao');
-x_errorbar = [-3 -2 -1 0 1 2 3] .* 0.115;
+x_errorbar = [-2.5 -1.5 -0.5 0.5 1.5 2.5 ] .* 0.135;
 
 for p = 1:3
     nexttile
@@ -70,7 +70,7 @@ for p = 1:3
 
     b = barh([0], fliplr(plot_errors(w_idx)) / 1e3, 0.95);
     errorbar(fliplr(plot_errors(w_idx)) / 1e3, x_errorbar, fliplr(plot_errorbar(w_idx)) / 1e3, ...
-        'horizontal', 'LineStyle', 'none', 'CapSize', 6, 'Color', 'k', 'LineWidth', 1);
+        'horizontal', 'LineStyle', 'none', 'CapSize', 4, 'Color', 'k', 'LineWidth', 0.75);
 
     yticks([]);
     ylabel({'Geographical layer'}, 'Interpreter', 'latex', 'FontSize', 8, 'Rotation', 90, 'Color', 'k');
@@ -113,7 +113,8 @@ for i = 1:numel(target_layers)
 
     sq_errors(i) = fit.result.squared_error;
     yr_errors(i) = sqrt(fit.result.squared_error);
-    yr_errorbar(i) = get_error_se_from_variance(fit);
+    % yr_errorbar(i) = get_error_se_from_variance(fit);
+    yr_errorbar(i) = rmse_se_total(fit.result.errors) + get_error_se_from_variance(fit);
 end
 end
 
@@ -148,4 +149,24 @@ hessian = squeeze(hessian);
 first_order_var = grad' * cov_theta * grad;
 second_order_var = 0.5 * trace(hessian * cov_theta * hessian * cov_theta);
 se = sqrt(max(first_order_var + second_order_var, 0));
+end
+
+function se = rmse_se_total(e)
+% Computes analytical SE of RMSE based on total sampling variability
+%
+% Input:
+%   e : vector of residuals (errors), size Lx1 or 1xL
+%
+% Output:
+%   se : standard error of RMSE
+
+    e = e(:);              % ensure column vector
+    L = length(e);
+
+    q = e.^2;              % squared errors
+    Qstar = mean(q);       % empirical MSE
+
+    Omega_hat = mean((q - Qstar).^2);   % variance of q (not unbiased; matches formula)
+
+    se = sqrt(Omega_hat / (4 * Qstar * L));
 end
