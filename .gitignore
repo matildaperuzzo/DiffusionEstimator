@@ -56,14 +56,16 @@ octave-workspace
 *.svg
 *.pptx
 
-# ignore data/raw folder
-data/raw/
-# generated_data/.*
+# ignore data/raw subfolders except tracked ones
+data/raw/*/
+!data/raw/cobo_etal/
+!data/raw/hart_maize/
+!data/raw/pinhasi/
+!data/raw/de_souza_wheat_data/
 
-! data/raw/cobo_etal/
-! data/raw/hart_maize/
-! data/raw/pinhasi/
-! data/raw/de_souza_wheat_data/
+# allow mat files in generated_data
+!generated_data/*.mat
+!generated_data/**/*.mat
 
 
 # ignore output files 
