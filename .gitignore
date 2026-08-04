@@ -1,0 +1,74 @@
+# Ignore hidden files
+.*
+
+# don't ignore .gitignore
+!.gitignore
+
+## MATLAB / OCTAVE gitignore template
+
+# From : https://github.com/github/gitignore/blob/master/Global/MATLAB.gitignore
+
+# Windows default autosave extension
+*.asv
+
+# OSX / *nix default autosave extension
+*.m~
+
+# Compiled MEX binaries (all platforms)
+*.mex*
+
+# Packaged app and toolbox files
+*.mlappinstall
+*.mltbx
+
+# Generated helpsearch folders
+helpsearch*/
+
+# Simulink code generation folders
+slprj/
+sccprj/
+
+# Matlab code generation folders
+codegen/
+
+# Simulink autosave extension
+*.autosave
+
+# Simulink cache files
+*.slxc
+
+# Octave session info
+octave-workspace
+
+# ignore data files
+*.mat
+*.xls
+*.xlsx
+*.nc
+*.bil
+
+# ignore all images
+*.png
+*.jpg
+# *.pdf
+*.gif
+*.fig
+*.svg
+*.pptx
+
+# ignore data/raw folder
+data/raw/
+# generated_data/.*
+
+! data/raw/cobo_etal/
+! data/raw/hart_maize/
+! data/raw/pinhasi/
+! data/raw/de_souza_wheat_data/
+
+
+# ignore output files 
+*.out
+*.sh
+
+# ignore compressed files
+*.zip

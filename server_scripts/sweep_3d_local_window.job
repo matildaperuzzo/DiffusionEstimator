@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#SBATCH --account=dschonho_1760
+#SBATCH --partition=main
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=150G
+#SBATCH --time=45:00:00
+#SBATCH --output='sweep_3d_local_window.out'
+#SBATCH --error='sweep_3d_local_window.err'
+
+module purge
+module load matlab/2024a
+
+matlab -batch "sweep_3d_local_window"
