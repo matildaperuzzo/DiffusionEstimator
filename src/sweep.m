@@ -1,4 +1,4 @@
-function [theta_min, on_edge, min_error, errors] = sweep(ranges, num_points, max_iter, parameters)
+function [theta_min, on_edge, min_error, errors] = sweep(ranges, num_points, max_iter, parameters, model)
 
     on_edge = true;
 
@@ -9,15 +9,17 @@ function [theta_min, on_edge, min_error, errors] = sweep(ranges, num_points, max
 
     range_size = ranges(:,2) - ranges(:,1);
     range_mean = ranges(:,1) + range_size/2;
+    if nargin < 5
+        model = 'monte carlo';
+    end
 
     while on_edge
         % w = waitbar(0,"Performing grid search, iteration " + string(iter));
         parfor i = 1:length(thetas(:,1))
 
             theta = thetas(i,:);
-            result = run_model(parameters, theta);
             % calculate error
-            error = result.squared_error;
+            error = optimize_model(theta, parameters, 1, model);
             % store error
             errors(i) = error;
             

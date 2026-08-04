@@ -23,7 +23,7 @@ get_errors = false;
 if load_data == false
 
     number_of_averages = 100;
-    dataset = 'maize_simple'; %options: 'cobo','pinhasi','all_wheat','maize'
+    dataset = 'maize'; %options: 'cobo','pinhasi','all_wheat','maize'
     layers = {'av'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
     directory = 'generated_data/';
 
@@ -31,8 +31,9 @@ if load_data == false
     filename = [directory dataset '_'];
     filename = [filename strjoin(layers,'_') '_'];
     filename = [filename string(number_of_averages) 'av_'];
+    filename = [filename "fast_"];
     filename = [filename string(t)];
-    filename = strjoin(filename,'');
+    filename = strjoin(filename);
 
     level = 0;
     
@@ -206,11 +207,11 @@ end
 if level < 4
     
     parameters.n = 20;
-    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 2, parameters);
+    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 2, parameters, 'fast marching');
 
     ranges = [0.8 1.2].*theta_start';  
 
-    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 1, parameters);
+    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 1, parameters, 'fast marching');
 
     parameters.n = number_of_averages;
     level = 4;
@@ -229,18 +230,16 @@ end
 if level < 5
     
     % parameters = data_prep(number_of_averages, active_layers, x, y, t);
-    factors = [1e3];
+    factors = [1];
     all_params = {};
     for factor=factors
     
-        objective_function = @(theta) optimize_model_mean(theta, parameters, factor);
+        objective_function = @(theta) optimize_model(theta, parameters, factor, "fast marching");
         theta_start = theta_start;
         
         % WITH GRADIENT
         options = optimoptions('fminunc', ...
             'Display', 'iter', ...
-            'Algorithm', 'trust-region', ...
-            'HessianFcn','objective', ...
             'SpecifyObjectiveGradient',true, ...
             'StepTolerance', 5e-3, ...,
             "FiniteDifferenceStepSize", 0.001, ...,
@@ -253,44 +252,32 @@ if level < 5
         
         [theta, fval, exitflag, output, grad, hessian] = fminunc(objective_function, theta_start, options);
 
+     
         
-        theta = theta;
-        theta_start = theta_start;
+        result = run_model_fast_marching(parameters,theta);
         
-        result = run_model(parameters,theta);
-        
-        A = result.A;
+        A = result.T;
         error = result.squared_error;
         times = result.times;
 
         all_params{length(all_params)+1} = paramsHistory;
         
-        theta_start = theta;
         min_error = error;
         disp("New minimum found")
         disp('Optimized Parameters for factor '+string(factor)+':');
         disp(theta);
 
-        theta_optim = theta_start;
+        theta_optim = theta;
     end
 
     level = 5;
     save(filename, 'theta_optim', "level", "min_error", "all_params", '-append')
 end
 
-%%
-% [error, grad, hessian] = optimize_model(theta_optim, parameters, 1);
-% parameters.calculate_W = true;
-% result = run_model(parameters,theta_optim);
-% parameters.calculate_W = false;
-% jacobian = grad*grad';
-% var_mat = 1/length(parameters.dataset_idx) * (hessian)^-1 * (jacobian) * (hessian)^-1;
-% standard_errors = sqrt(diag(var_mat))
-
 %% report results
-result = run_model(parameters,theta_optim);
+result = run_model_fast_marching(parameters,theta_optim);
 
-A = result.A;
+A = result.T;
 final_errors = result.errors;
 times = result.times;
 
@@ -307,7 +294,8 @@ disp('Speeds (km/decade): ['+speed_str+']');
 disp('Squared error: ' + string(result.squared_error))
 disp('Error in years: ' + string(sqrt(mean(result.squared_error))))
 
-save(filename, "result", '-append')
+runtime = toc-tic;
+save(filename, "result","runtime", '-append')
 
 plot_map(parameters, final_errors, true)
 
@@ -339,7 +327,7 @@ if get_errors
         sampled_dataset = complete_dataset(random_indices,:);
 
         factor = 1e3;
-        objective_function = @(theta) optimize_model_bootstraps(theta, parameters, sampled_dataset, factor);
+        objective_function = @(theta) optimize_model(theta, parameters, sampled_dataset, factor,"fast marching");
         % WITH GRADIENT
         options = optimoptions('fminunc', ...
             'Display', 'iter', ...

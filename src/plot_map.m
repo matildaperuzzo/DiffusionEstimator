@@ -1,6 +1,10 @@
-function plot_map(parameters,errors, adjust_scale, A_result)
+function plot_map(parameters,errors, adjust_scale, A_result, target_ax)
 
-    if nargin > 3
+    if nargin < 5
+        target_ax = [];
+    end
+
+    if nargin > 3 && ~isempty(A_result)
         A = A_result;
     else
         A = parameters.A;
@@ -13,9 +17,14 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     loc = 10;
     fwidth = 20;
     tic
-    f = figure(1);
-    f.Position = [100 100 600 400];
-    hold on;
+    if isempty(target_ax) || ~isgraphics(target_ax, 'axes')
+        f = figure(1);
+        f.Position = [100 100 600 400];
+        hold on;
+    else
+        axes(target_ax);
+        hold(target_ax, 'on');
+    end
 
     latlim = parameters.lat;
     lonlim = parameters.lon;
@@ -26,7 +35,7 @@ function plot_map(parameters,errors, adjust_scale, A_result)
     axis xy
 
     % color map with A
-    if nargin > 3
+    if nargin > 3 && ~isempty(A_result)
 
         geoshow(A, R, 'DisplayType', 'surface')
     %make sea white

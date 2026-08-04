@@ -54,6 +54,13 @@ function [x,y,t] = get_dataset(dataset)
         y = cobo.Longitude;
         t = cobo.Est_DateMean_BC_AD_;
 
+    elseif strcmp(dataset, "maize_simple")
+        maize = readtable("data\raw\hart_maize\Maize Arrival Times and Locations in Ancient Civilizations - Table 1.csv");
+        x = maize.Latitude;
+        y = maize.Longitude;
+        t = maize.YearOfArrival;
+        
+
     elseif strcmp(dataset,'maize')
 
         maize = readtable("data/raw/hart_maize/MaizeDataset_cleaned.xlsx");

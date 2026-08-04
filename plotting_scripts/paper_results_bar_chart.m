@@ -18,7 +18,7 @@ load(database_file, 'database');
 target_layers = {
     {'av'}
     {'sea'}
-    {'asym', 'sea'}
+    % {'asym', 'sea'}
     {'csi', 'sea'}
     {'hydro', 'sea'}
     {'prec', 'sea'}
@@ -140,7 +140,7 @@ end
 
 theta = fit.theta_optim(:);
 cov_theta = fit.variance_info.V_iid / size(fit.parameters.dataset_idx, 1);
-metric = @(th) sqrt(run_model(fit.parameters, th(:)').squared_error);
+metric = @(th) sqrt(run_model_kpp(fit.parameters, th(:)').squared_error);
 window_size = 0.1;
 [grad, hessian] = calculate_gradient_fit(metric, theta, [], window_size);
 grad = grad(:);

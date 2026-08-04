@@ -5,10 +5,14 @@ script_dir = fileparts(mfilename('fullpath'));
 repo_root = fileparts(script_dir);
 addpath(fullfile(repo_root, 'src'));
 
-data_file = fullfile(repo_root, 'generated_data', 'sweep_grad_descent', ...
-    'maize_av_sea_100av_2026-03-18_09-20.mat');
+data_file = fullfile(repo_root, 'generated_data', ...
+    'maize_av_sea_ 100 av_ fast_ 2026-06-11_10-58.mat');
 
 load(data_file);
+
+%%
+
+crop = "maize";
 
 if exist('crop', 'var')
     crop_name = string(crop);
@@ -22,22 +26,14 @@ if crop_name == "cobo"
     parameters.A(76,39,46) = true;
 end
 
-if ~exist('bs_theta', 'var') || isempty(bs_theta)
-    error('Expected bs_theta in %s.', data_file);
-end
-
-if size(bs_theta, 2) ~= 2
-    error('This plotting script expects 2 active dimensions, found %d.', size(bs_theta, 2));
-end
 
 n_points = 51;
-plot_clim = [min(bs_errors), max(bs_errors)*1.5];
 output_file = fullfile(repo_root, 'generated_data', sprintf('%s_sweep_2d.mat', crop_name));
 
-ranges = [min(bs_theta, [], 1)', max(bs_theta, [], 1)'];
+ranges = [[-2 2]; [-2 2]]; 
 theta_center = mean(ranges, 2)';
 
-[theta_min, on_edge, min_error, errors] = sweep(ranges, n_points, 0, parameters);
+[theta_min, on_edge, min_error, errors] = sweep(ranges, n_points, 3, parameters, 'fast marching');
 theta_0 = linspace(ranges(1,1), ranges(1,2), n_points);
 theta_1 = linspace(ranges(2,1), ranges(2,2), n_points);
 all_errors = reshape(errors, [n_points, n_points]);
@@ -47,7 +43,7 @@ save(output_file, 'all_errors', 'theta_0', 'theta_1', 'theta_center', 'ranges', 
 
 %%
 figure;
-plot_clim = [7.4e5 7.8e5];
+plot_clim = [];
 imagesc(theta_0, theta_1, all_errors');
 set(gca, 'YDir', 'normal');
 if ~isempty(plot_clim)
@@ -57,8 +53,8 @@ colorbar;
 hold on;
 plot(theta_center(1), theta_center(2), 'ko', 'MarkerFaceColor', 'w', 'MarkerSize', 8, ...
     'DisplayName', 'Sweep center');
-plot(theta_min(1), theta_min(2), 'kp', 'MarkerFaceColor', 'y', 'MarkerSize', 12, ...
-    'DisplayName', 'Sweep minimum');
+% plot(theta_min(1), theta_min(2), 'kp', 'MarkerFaceColor', 'y', 'MarkerSize', 12, ...
+%     'DisplayName', 'Sweep minimum');
 xlabel('\theta_1');
 ylabel('\theta_2');
 title(sprintf('Objective sweep over bs\\_theta range: %s', crop_name));

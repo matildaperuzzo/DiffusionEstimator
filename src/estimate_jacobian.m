@@ -1,7 +1,7 @@
 function J = estimate_jacobian(theta, parameters, h)
     
     if nargin < 3 || isempty(h)
-        h = 0.05;
+        h = 0.01;
     end
 
     K = numel(theta);

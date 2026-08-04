@@ -23,16 +23,17 @@ get_errors = false;
 if load_data == false
 
     number_of_averages = 100;
-    dataset = 'maize_simple'; %options: 'cobo','pinhasi','all_wheat','maize'
-    layers = {'av'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
+    dataset = 'maize'; %options: 'cobo','pinhasi','all_wheat','maize'
+    layers = {'av','prec','sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
     directory = 'generated_data/';
 
     %create filename
     filename = [directory dataset '_'];
     filename = [filename strjoin(layers,'_') '_'];
     filename = [filename string(number_of_averages) 'av_'];
+    filename = [filename "kpp_"];
     filename = [filename string(t)];
-    filename = strjoin(filename,'');
+    filename = strjoin(filename);
 
     level = 0;
     
@@ -206,11 +207,14 @@ end
 if level < 4
     
     parameters.n = 20;
-    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 2, parameters);
+    [theta_start, on_edge, min_error, errors] = sweep(ranges, 6, 3, parameters, 'kpp');
 
     ranges = [0.8 1.2].*theta_start';  
 
-    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 1, parameters);
+    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 1, parameters, 'kpp');
+
+    ranges = [0.95 1.05].*theta_start';
+    [theta_start, on_edge, min_error, errors] = sweep(ranges, 11, 1, parameters, 'kpp');
 
     parameters.n = number_of_averages;
     level = 4;
@@ -229,11 +233,11 @@ end
 if level < 5
     
     % parameters = data_prep(number_of_averages, active_layers, x, y, t);
-    factors = [1e3];
+    factors = [1];
     all_params = {};
     for factor=factors
     
-        objective_function = @(theta) optimize_model_mean(theta, parameters, factor);
+        objective_function = @(theta) optimize_model(theta, parameters, factor, "kpp");
         theta_start = theta_start;
         
         % WITH GRADIENT
@@ -243,7 +247,7 @@ if level < 5
             'HessianFcn','objective', ...
             'SpecifyObjectiveGradient',true, ...
             'StepTolerance', 5e-3, ...,
-            "FiniteDifferenceStepSize", 0.001, ...,
+            "FiniteDifferenceStepSize", 0.005, ...,
             "FunctionTolerance",0.00001, ...
             "OptimalityTolerance",2e-6, ...
             'MaxFunctionEvaluations', 10000, ...
@@ -257,7 +261,7 @@ if level < 5
         theta = theta;
         theta_start = theta_start;
         
-        result = run_model(parameters,theta);
+        result = run_model_kpp(parameters,theta);
         
         A = result.A;
         error = result.squared_error;
@@ -278,17 +282,8 @@ if level < 5
     save(filename, 'theta_optim', "level", "min_error", "all_params", '-append')
 end
 
-%%
-% [error, grad, hessian] = optimize_model(theta_optim, parameters, 1);
-% parameters.calculate_W = true;
-% result = run_model(parameters,theta_optim);
-% parameters.calculate_W = false;
-% jacobian = grad*grad';
-% var_mat = 1/length(parameters.dataset_idx) * (hessian)^-1 * (jacobian) * (hessian)^-1;
-% standard_errors = sqrt(diag(var_mat))
-
 %% report results
-result = run_model(parameters,theta_optim);
+result = run_model_kpp(parameters,theta_optim);
 
 A = result.A;
 final_errors = result.errors;
@@ -307,7 +302,8 @@ disp('Speeds (km/decade): ['+speed_str+']');
 disp('Squared error: ' + string(result.squared_error))
 disp('Error in years: ' + string(sqrt(mean(result.squared_error))))
 
-save(filename, "result", '-append')
+runtime = toc-tic;
+save(filename, "result","runtime", '-append')
 
 plot_map(parameters, final_errors, true)
 
@@ -339,7 +335,7 @@ if get_errors
         sampled_dataset = complete_dataset(random_indices,:);
 
         factor = 1e3;
-        objective_function = @(theta) optimize_model_bootstraps(theta, parameters, sampled_dataset, factor);
+        objective_function = @(theta) optimize_model(theta, parameters, sampled_dataset, factor,"kpp");
         % WITH GRADIENT
         options = optimoptions('fminunc', ...
             'Display', 'iter', ...
