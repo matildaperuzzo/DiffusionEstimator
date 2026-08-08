@@ -1,0 +1,25 @@
+{
+    "@context": "https://w3id.org/codemeta/3.0",
+    "applicationCategory": "SoftwareSourceCode,SoftwareApplication",
+    "author": [
+        {
+            "affiliation": {
+                "name": "Oxford University",
+                "@type": "Organization"
+            },
+            "familyName": "Peruzzo",
+            "givenName": "Matilda",
+            "@id": "https://github.com/matildaperuzzo",
+            "@type": "Person"
+        }
+    ],
+    "codeRepository": "https://github.com/matildaperuzzo/DiffusionEstimator",
+    "dateCreated": "2024-08-09",
+    "description": "A diffusion process implemented in src/run_model. It consists of a Monte Carlo simulation of a diffusive process where the speed of diffusion is spatially dependent. The process is then averaged over many runs.\nThe result of the diffusive process is the matrix A of dimensions size_x X size_y X n. time steps. Each entry gives the probability of the diffusion having reached point x,y at time t.\nFor each individual run an error is obtained by calculating MSE with respect to the original dataset.\nrun_model.m returns a result object which contains errors and the matrix A for the run.\n \n",
+    "identifier": "DiffusionEstimator-bottlenecks",
+    "license": "https://spdx.org/licenses/MIT",
+    "name": "DiffusionEstimator",
+    "programmingLanguage": "MATLAB",
+    "issueTracker": "https://github.com/matildaperuzzo/DiffusionEstimator/issues",
+    "@type": "SoftwareSourceCode"
+}
