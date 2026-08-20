@@ -5,10 +5,7 @@ script_dir = fileparts(mfilename('fullpath'));
 repo_root = fileparts(script_dir);
 addpath(fullfile(repo_root, 'src'));
 
-data_file = fullfile(repo_root, 'generated_data', ...
-    'maize_av_sea_ 100 av_ fast_ 2026-06-11_10-58.mat');
-
-load(data_file);
+load("C:\Users\mperuzzo\OneDrive - Nexus365\Documents\bottlenecks\generated_data\maize_av_sea_ 100 av_ fast_ 2026-08-07_10-41.mat")
 
 %%
 

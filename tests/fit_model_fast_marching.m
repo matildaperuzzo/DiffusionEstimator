@@ -24,7 +24,7 @@ if load_data == false
 
     number_of_averages = 100;
     dataset = 'maize'; %options: 'cobo','pinhasi','all_wheat','maize'
-    layers = {'av'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
+    layers = {'av','sea'}; %full {'av' 'asym' 'csi','hydro' 'prec' 'tmean','sea','crop'}
     directory = 'generated_data/';
 
     %create filename

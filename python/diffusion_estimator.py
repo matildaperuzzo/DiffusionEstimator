@@ -139,13 +139,16 @@ class DiffusionEstimator(object):
         Plot the objective function (mean squared error) against the theta values.
         """
         import matplotlib.pyplot as plt
+        from scipy.interpolate import griddata
+        
         if np.shape(self.objective_function)[1] == 3:
             theta_1 = self.objective_function[:, 0]
             theta_2 = self.objective_function[:, 1]
             errors = self.objective_function[:, 2]
-            meshgrid = np.meshgrid(np.unique(theta_1), np.unique(theta_2))
+            meshgrid = np.meshgrid(theta_1, theta_2)
+            Z = griddata((theta_1, theta_2), errors, (meshgrid[0], meshgrid[1]), method="linear")
             plt.figure(figsize=(10, 6))
-            plt.contourf(meshgrid[0], meshgrid[1], errors.reshape(len(np.unique(theta_2)), len(np.unique(theta_1))), levels=50, cmap='viridis')
+            plt.contourf(meshgrid[0], meshgrid[1], Z, levels=50, cmap='viridis')
             plt.colorbar(label='Mean Squared Error')
             plt.xlabel('Theta 1')
             plt.ylabel('Theta 2')
@@ -195,12 +198,12 @@ class DiffusionEstimator(object):
                 gradient[index] = (forward - backward) / (2 * epsilon)
             return gradient
 
-        max_iter = 50
+        max_iter = 10
         initial_learning_rate = 0.05
         min_learning_rate = 1e-8
         backtrack_factor = 0.5
-        armijo_c = 1e-4
-        tolerance = 1e-6
+        armijo_c = 1e-8
+        tolerance = 1e5
         history = []
 
         for iteration in range(1, max_iter + 1):
@@ -292,11 +295,11 @@ class DiffusionEstimator(object):
         return fit_result
 
 if __name__ == "__main__":
-    crop = 'wheat'
+    crop = 'maize'
     layers = ["sea"]
     estimator = DiffusionEstimator(crop, layers)
-    theta_range = np.array([[-1,-1], [2,1]])
-    num_points = 11
+    theta_range = np.array([[-2,-2], [2,2]])
+    num_points = 21
     min_theta, min_error = estimator.sweep_theta(theta_range, num_points)
     estimator.plot_objective_function()
     print(f"Minimum theta: {min_theta}")

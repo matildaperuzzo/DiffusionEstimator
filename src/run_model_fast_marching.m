@@ -23,7 +23,7 @@ function result = run_model_fast_marching(parameters, theta, dataset)
     F = 1./(1 + exp(-k * (F)));
     % F = F./parameters.W;
     
-    T = msfm2d(F, start);
+    T = msfm2d(F, start, parameters.W);
     result.T = T;
     result.F = F;
     times = nan(n_data, 1);

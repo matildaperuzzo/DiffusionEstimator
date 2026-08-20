@@ -1,5 +1,5 @@
 
-function T = msf2d(F, source, W)
+function T = msfm2d(F, source, W)
     T = 999*ones(size(F));
     accepted = zeros(size(F));
     considered = zeros(size(F));
@@ -25,8 +25,8 @@ function T = msf2d(F, source, W)
             n = neighbours(:,i);
             considered(x+n(1),y+n(2)) = 1;
             if considered(x+n(1), y+n(2)) == 1
-                s = h(i) * W(x+n(1),y+n(2)) * F(x+n(1),y+n(2));
-                T_candidate = T(x,y) + s;
+                s = h(i) * W(x+n(1),y+n(2)) / F(x+n(1),y+n(2));
+                T_candidate = calculate_T(T,x+n(1),y+n(2),s);
                 if T_candidate < T(x+n(1), y+n(2))
                     T(x+n(1), y+n(2)) = T_candidate;
                     considered(x+n(1), y+n(2)) = 1; 
@@ -64,7 +64,7 @@ while all_reached ~= true
                 if (accepted(nx,ny) == 1)
                     continue
                 end
-                s = h(i) * W(nx, ny) * F(nx, ny);
+                s = h(i) * W(nx, ny) / F(nx, ny);
                 accepted_times = 999*ones(size(T));
                 accepted_times(accepted == 1) = T(accepted == 1);
                 T_candidate = calculate_T(accepted_times,nx,ny,s);
