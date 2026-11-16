@@ -27,7 +27,7 @@ clearvars -except delta
 
 disp('Build geography data ...')
 
-filename = 'data/prep/geography_0p5deg.mat';
+filename = 'data/prep/geography_test.mat';
 
 %% Prepare Template Rater
 
@@ -41,12 +41,12 @@ lon = -180+delta/2:delta:180-delta/2;
 
 [lonmtx, latmtx] = meshgrid(lon, lat);
 
-% save(filename,'-v7.3');
-save(filename, '-append')
+save(filename,'-v7.3');
+% save(filename, '-append')
 
 %% Weights Grid
 
-w = cos(pi*lat/18s0);
+w = cos(pi*lat/180);
 
 W = repmat(w',1,length(lon));
 

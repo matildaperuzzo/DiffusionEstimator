@@ -80,3 +80,8 @@ data/raw/*/
 
 # ignore compressed files
 *.zip
+# Large local HDF5 datasets excluded from GitHub
+data/processed/layers/trace_100yr.h5
+data/processed/layers/prec.h5
+data/processed/layers/temp.h5
+data/processed/acc.h5
