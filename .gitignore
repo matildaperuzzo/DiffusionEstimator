@@ -63,6 +63,12 @@ data/raw/*/
 !data/raw/pinhasi/
 !data/raw/de_souza_wheat_data/
 
+# src/get_dataset.m reads these spreadsheets; the *.xls and *.xlsx rules above
+# would otherwise keep them out even inside the tracked folders
+!data/raw/pinhasi/*.xls
+!data/raw/cobo_etal/*.xlsx
+!data/raw/hart_maize/*.xlsx
+
 # allow mat files in generated_data
 !generated_data/*.mat
 !generated_data/**/*.mat
