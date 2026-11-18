@@ -18,7 +18,7 @@ load(database_file, 'database');
 target_layers = {
     {'av'}
     {'sea'}
-    % {'asym', 'sea'}
+    {'asym', 'sea'}
     {'csi', 'sea'}
     {'hydro', 'sea'}
     {'prec', 'sea'}
