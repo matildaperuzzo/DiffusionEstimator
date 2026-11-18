@@ -450,28 +450,13 @@ def _load_rice(source: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 
 def _load_maize(source: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Load cleaned maize rows and append earliest Zea mays dates by location."""
-    # Load the cleaned maize records first, preserving their source order.
-    cleaned_table = pd.read_excel(source / "hart_maize" / "MaizeDataset_cleaned.xlsx")
-    cleaned = _select_columns(cleaned_table, "Latitude", "Longitude", "Year")
-    # Read the additional archaeological records used by the MATLAB function.
-    additional = pd.read_csv(source / "hart_maize" / "p3k14c_2022.06.csv")
-    # Retain rows whose taxa mention Zea mays, ignoring case like MATLAB contains(lower(...)).
-    maize_rows = additional.loc[additional["Taxa"].astype(str).str.contains("zea mays", case=False, na=False)]
-    # Select age and coordinates, then discard rows with missing values.
-    maize_records = _select_columns(maize_rows, "Age", "Long", "Lat").dropna()
-    # Convert BP ages to years, then keep the earliest date for each latitude/longitude pair.
-    maize_records = maize_records.assign(year=1950.0 - maize_records.iloc[:, 0].astype(float))
-    earliest = maize_records.groupby([maize_records.columns[2], maize_records.columns[1]], sort=True)["year"].min().reset_index()
-    additional_latitude = earliest.iloc[:, 0].to_numpy()
-    additional_longitude = earliest.iloc[:, 1].to_numpy()
-    additional_time = earliest["year"].to_numpy()
-    # Append the unique additional coordinates after the cleaned dataset as in MATLAB.
-    return (
-        np.concatenate((cleaned.iloc[:, 0].to_numpy(), additional_latitude)),
-        np.concatenate((cleaned.iloc[:, 1].to_numpy(), additional_longitude)),
-        np.concatenate((cleaned.iloc[:, 2].to_numpy(), additional_time)),
-    )
+    """Load the calibrated maize dates in get_dataset.m order."""
+    # Calendar years from the IntCal20 calibration of the radiocarbon ages
+    # (python/calibrate_maize_dates.py): the cleaned Hart rows, then the
+    # earliest Zea mays date at each unique p3k14c coordinate.
+    table = pd.read_csv(source / "hart_maize" / "maize_calibrated_intcal20.csv")
+    records = _select_columns(table, "lat", "lon", "year_cal")
+    return records.iloc[:, 0].to_numpy(), records.iloc[:, 1].to_numpy(), records.iloc[:, 2].to_numpy()
 
 
 def convert_crops(source: Path, destination: Path, delta: float = 0.5, padding: float = 5.0) -> None:
