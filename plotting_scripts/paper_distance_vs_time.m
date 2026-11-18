@@ -178,4 +178,4 @@ legend(["Original dataset", "Simulation with geography", "Baseline estimate"], .
 set(gca, "TickLabelInterpreter", 'latex')
 
 set(gcf, 'Color', 'White', 'Alphamap', 0)
-exportgraphics(gcf,"saved_plots/dist_vs_time.pdf", 'ContentType', 'vector')
+exportgraphics(gcf, fullfile(repo_root, 'saved_plots', 'dist_vs_time.pdf'), 'ContentType', 'vector')

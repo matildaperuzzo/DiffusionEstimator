@@ -112,4 +112,4 @@ for k = 1:numel(database)
 end
 end
 
-exportgraphics(gcf,'saved_plots/estimates.pdf','ContentType','vector')
+exportgraphics(gcf, fullfile(repo_root, 'saved_plots', 'estimates.pdf'), 'ContentType', 'vector')
