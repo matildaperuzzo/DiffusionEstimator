@@ -62,7 +62,19 @@ function [x,y,t] = get_dataset(dataset)
         
 
     elseif strcmp(dataset,'maize')
+        % Calendar years from the IntCal20 calibration of the maize
+        % radiocarbon ages (python/calibrate_maize_dates.py), the same 829
+        % sites in the same order as 'maize_uncalibrated': the Hart rows,
+        % then one row per unique p3k14c Zea mays coordinate.
+        maize = readtable("data/raw/hart_maize/maize_calibrated_intcal20.csv");
+        x = maize.lat;
+        y = maize.lon;
+        t = maize.year_cal;
 
+    elseif strcmp(dataset,'maize_uncalibrated')
+        % Uncalibrated radiocarbon ages, as used by the maize fits made
+        % before 2026-11. The Hart Year column is 2000 minus the 14C age,
+        % the p3k14c rows are 1950 minus the 14C age.
         maize = readtable("data/raw/hart_maize/MaizeDataset_cleaned.xlsx");
         x = maize.Latitude;
         y = maize.Longitude;
