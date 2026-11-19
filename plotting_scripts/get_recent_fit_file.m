@@ -1,4 +1,8 @@
 function file = get_recent_fit_file(repo_root, crop, layers)
+% Return the newest fit for a crop and set of layers, judged by the
+% yyyy-mm-dd_HH-MM stamp in the file name. File modification times are not
+% used: a fresh clone gives every file the checkout time, which made the
+% choice arbitrary.
 directory = repo_root;
 
 if nargin < 3
@@ -20,6 +24,18 @@ if isempty(files)
     error('No generated_data file found for crop %s and layers %s.', crop, strjoin(layers, ','));
 end
 
-[~, idx] = max([files.datenum]);
+stamps = NaN(numel(files), 1);
+for k = 1:numel(files)
+    token = regexp(files(k).name, '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}', 'match', 'once');
+    if ~isempty(token)
+        stamps(k) = datenum(token, 'yyyy-mm-dd_HH-MM');
+    end
+end
+if all(isnan(stamps))
+    error('No fit file for crop %s and layers %s carries a yyyy-mm-dd_HH-MM stamp.', ...
+        crop, strjoin(layers, ','));
+end
+
+[~, idx] = max(stamps);
 file = fullfile(files(idx).folder, files(idx).name);
 end

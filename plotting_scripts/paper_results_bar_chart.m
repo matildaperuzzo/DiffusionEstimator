@@ -10,7 +10,7 @@ set(0, 'defaulttextinterpreter', 'latex');
 
 database_file = fullfile(repo_root, 'generated_data', 'sweep_grad_descent', 'filename_database.mat');
 if exist(database_file, 'file') ~= 2
-    database = build_filename_database_impl(fullfile(repo_root, 'generated_data'), false);
+    database = build_filename_database_impl(fullfile(repo_root, 'generated_data', 'sweep_grad_descent'), false);
     save(database_file, 'database');
 end
 load(database_file, 'database');
@@ -18,7 +18,7 @@ load(database_file, 'database');
 target_layers = {
     {'av'}
     {'sea'}
-    % {'asym', 'sea'}
+    {'asym', 'sea'}
     {'csi', 'sea'}
     {'hydro', 'sea'}
     {'prec', 'sea'}

@@ -66,8 +66,10 @@ Crop point files follow the source selection in `src/get_dataset.m`:
 
 - Wheat combines Pinhasi `SITE` rows and De Souza wheat records.
 - Rice reads the Cobo workbook's `S1 Table` sheet.
-- Maize combines the cleaned maize workbook with earliest per-location dates
-  from `p3k14c_2022.06.csv` rows whose taxa contain `Zea mays`.
+- Maize reads `hart_maize/maize_calibrated_intcal20.csv`, written by
+  `calibrate_maize_dates.py`: the cleaned maize workbook rows, then the
+  earliest date at each coordinate of the `p3k14c_2022.06.csv` rows whose
+  taxa contain `Zea mays`, with every radiocarbon age calibrated with IntCal20.
 
 Each separate crop HDF5 file contains aligned `lat`, `lon`, and `time` arrays,
 plus an `index` matrix with one-based `[latitude_index, longitude_index,
